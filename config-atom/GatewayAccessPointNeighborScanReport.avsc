@@ -1,0 +1,40 @@
+{
+  "namespace": "com.comcast.kestrel",
+  "name": "GatewayAccessPointNeighborScanReport",
+  "type": "record",
+  "doc": "Contains zero or more Access Point Neighbor Scan reports for an RDK-B gateway",
+  "fields": [
+    {"name": "gateway_mac", "type": {"type": "fixed", "size": 6, "name": "MAC", "doc": "A MAC Address (6 bytes)"}, "doc": "Identifying MAC address of the gateway device (Usually the Cable Modem Mac)"},
+    {"name": "polling_interval", "type": "int", "doc": "Interval used to poll Neighbor Scan data from the driver (milliseconds)"},
+    {"name": "reporting_interval", "type": "int", "doc": "Interval between uploading report data to WebPA (milliseconds)"},
+    {
+      "name": "AccessPointNeighborScanReports", "type": {
+        "type": "array", "items": {
+          "name": "AccessPointNeighborScanReport",
+          "type": "record",
+          "doc": "Access Point Neighbor report at a single timestamp",
+          "fields": [
+            {"name": "timestamp", "type": "long", "doc": "Timestamp that this record data was gathered (epoch in milliseconds)"},
+            {"name": "bssid_mac", "type": "com.comcast.kestrel.MAC", "doc": "The BSSID used for the neighboring WiFi SSID"},
+            {"name": "ssid_name", "type": ["null", "string"], "default": null, "doc": "The current service set identifier in use by the neighboring WiFi SSID"},
+            {"name": "mode", "type": ["null", "string"], "default": null, "doc": "The mode the neighboring WiFi radio is operating in"},
+            {"name": "radio_channel", "type": ["null", "int"], "default": null, "doc": "The current radio channel used by the neighboring WiFi radio"},
+            {"name": "signal_strength", "type": ["null", "int"], "default": null, "doc": "An indicator of radio signal strength (RSSI) of the neighboring WiFi radio measured in dBm"},
+            {"name": "security_mode_enabled", "type": ["null", "string"], "default": null, "doc": "The type of security the neighboring WiFi SSID advertises"},
+            {"name": "encryption_mode", "type": ["null", "string"], "default": null, "doc": "The type of encryption the neighboring WiFi SSID advertises"},
+            {"name": "operating_frequency_band", "type": ["null", "string"], "default": null, "doc": "Indicates the frequency band at which the radio this SSID instance is operating"},
+            {"name": "supported_standards", "type": ["null", "string"], "default": null, "doc": "List items indicate which IEEE 802.11 standards this Result instance can support simultaneously, in the frequency band specified by OperatingFrequencyBand"},
+            {"name": "operating_standards", "type": ["null", {"type": "enum", "symbols": ["a", "b", "g", "n", "ac"], "name": "OperatingStandard", "doc": "802.11 operating standard"}], "default": null, "doc": "Each list item MUST be a member of the list reported by theSupportedStandards parameter"},
+            {"name": "operating_channel_bandwidth", "type": ["null", {"type": "enum", "symbols": ["_20MHz","_40MHz","_80MHz","_80_80MHz", "_160MHz"], "name": "OperatingChannelBandwidth", "doc": "802.11 operating channel bandwidth"}], "default": null, "doc": " Indicates the bandwidth at which the channel is operating"},
+            {"name": "beacon_period", "type": ["null", "int"], "default": null, "doc": "Time interval (in ms) between transmitting beacons"},
+            {"name": "noise", "type": ["null", "int"], "default": null, "doc": "Indicator of average noise strength (in dBm) received from the neighboring WiFi radio"},
+            {"name": "basic_data_transfer_rates", "type": ["null", "string"], "default": null, "doc": "Basic data transmit rates (in Mbps) for the SSID"},
+            {"name": "supported_data_transfer_rates", "type": ["null", "string"], "default": null, "doc": "Data transmit rates (in Mbps) for unicast frames at which the SSID will permit a station to connect"},
+            {"name": "dtim_period", "type": ["null", "int"], "default": null, "doc": "The number of beacon intervals that elapse between transmission of Beacon frames containing a TIM element whose DTIM count field is 0"},
+            {"name": "channel_utilization", "type": ["null", "int"], "default": null, "doc": "Indicates the fraction of the time AP senses that the channel is in use by the neighboring AP for transmissions"}
+           ]
+        }
+      }
+    }
+  ]
+}

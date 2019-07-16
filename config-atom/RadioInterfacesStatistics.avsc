@@ -1,0 +1,257 @@
+{
+  "namespace": "com.comcast.kestrel.odp.event",
+  "name": "RadioInterfacesStatistics",
+  "type": "record",
+  "doc": "Contains a list of zero of more reports for each Radio on the Gateway. Each report contains interface status and L2 counters",
+  "fields": [
+    {
+      "name": "header",
+      "type": {
+        "namespace": "com.comcast.kestrel",
+        "name": "CoreHeader",
+        "type": "record",
+        "doc": "Common information related to the event which MUST be included in any kestrel event. It allows some common processing at the system level, and some consistency for processing events.",
+        "fields": [
+          {
+            "name": "timestamp",
+            "type": [
+              "null",
+              {
+                "logicalType": "timestamp-millis",
+                "type": "long"
+              }
+            ],
+            "doc": "The UTC time stamp in milliseconds since Unix epoch (January 1, 1970 midnight) when the event is generated.",
+            "default": null
+          },
+          {
+            "name": "uuid",
+            "type": [
+              "null",
+              {
+                "name": "UUID",
+                "namespace": "com.comcast.kestrel.datatype",
+                "size": 16,
+                "type": "fixed"
+              }
+            ],
+            "doc": "Unique identifier for the event used for event de-duplication and tracing.",
+            "default": null
+          },
+          {
+            "name": "source",
+            "type": [
+              "null",
+              "string"
+            ],
+            "doc": "Source of this report - generally the application or process generating the event",
+            "default": null
+          }
+        ]
+      }
+    },
+    {
+      "name": "cpe_id",
+      "type": {
+        "namespace": "com.comcast.kestrel.odp",
+        "name": "CPEIdentifier",
+        "type": "record",
+        "doc": "Unique identifying fields for a CPE device. All fields are optional, but at least one field should be populated with a non null value",
+        "fields": [
+          {
+            "name": "mac_address",
+            "type": [
+              "null",
+              {
+                "name": "MacAddress",
+                "namespace": "com.comcast.kestrel.datatype",
+                "size": 6,
+                "type": "fixed"
+              }
+            ],
+            "doc": "Canonical (Identifying) MAC address for the gateway. (Eg, may be CM Mac for cable modems)",
+            "default": null
+          },
+          {
+            "name": "cpe_type",
+            "type": [
+              "null",
+              "string"
+            ],
+            "doc": "Contains the cpe type e.g. Extender or Gateway",
+            "default": null
+          },
+          {
+            "name": "cpe_parent",
+            "type": [
+              "null",
+              "com.comcast.kestrel.odp.CPEIdentifier"
+            ],
+            "doc": "If this device is a child device (it is managed by another CPE device), this field identifies the parent device. Canonical identifier for the CPE. (Eg, may be CM Mac for cable modems)",
+            "default": null
+          }
+        ]
+      }
+    },
+    {
+      "name": "data",
+      "type": {
+        "items": {
+          "namespace": "com.comcast.kestrel.odp",
+          "name": "RadioInterfaceData",
+          "type": "record",
+          "doc": "Contains operational data collected about a single radio device on a CPE device",
+          "fields": [
+            {
+              "name": "radio_mac",
+              "type": "com.comcast.kestrel.datatype.MacAddress",
+              "doc": "MAC address of the Radio the report is related to"
+            },
+            {
+              "name": "timestamp",
+              "type": [
+                "null",
+                {
+                  "logicalType": "timestamp-millis",
+                  "type": "long"
+                }
+              ],
+              "doc": "The UTC time stamp in milliseconds since Unix epoch (January 1, 1970 midnight) when the record data is generated.",
+              "default": null
+            },
+            {
+              "name": "enabled",
+              "type": [
+                "null",
+                "boolean"
+              ],
+              "doc": "Indicates whether the radio is enabled",
+              "default": null
+            },
+            {
+              "name": "channel",
+              "type": [
+                "null",
+                "int"
+              ],
+              "doc": "802.11 channel in use by this radio",
+              "default": null
+            },
+            {
+              "name": "frequency_band",
+              "type": [
+                "null",
+                {
+                  "doc": "802.11 operating channel bandwidth [TR-181: Device.WiFi.Radio.{i}.OperatingFrequencyBand]",
+                  "name": "WifiRadioFrequencyBand",
+                  "namespace": "com.comcast.kestrel.odp.datatype",
+                  "symbols": [
+                    "_2_4GHz",
+                    "_5GHz"
+                  ],
+                  "type": "enum"
+                }
+              ],
+              "doc": "802.11 Frequency band in use by this radio",
+              "default": null
+            },
+            {
+              "name": "operating_channel_bandwidth",
+              "type": [
+                "null",
+                {
+                  "doc": "802.11 operating channel bandwidth [TR-181: Device.WiFi.Radio.{i}.OperatingChannelBandwidth]",
+                  "name": "WifiOperatingChannelBandwidth",
+                  "namespace": "com.comcast.kestrel.odp.datatype",
+                  "symbols": [
+                    "_20MHz",
+                    "_40MHz",
+                    "_80MHz",
+                    "_80_80MHz",
+                    "_160MHz"
+                  ],
+                  "type": "enum"
+                }
+              ],
+              "doc": "The operating channel bandwidth of this radio. The channel bandwidth (applicable to 802.11n and 802.11ac specifications only).",
+              "default": null
+            },
+            {
+              "name": "noise_floor",
+              "type": [
+                "null",
+                "float"
+              ],
+              "doc": "The noise floor for this radio channel where a recoverable signal can be obtained. (-110:0) Measured in dBm",
+              "default": null
+            },
+            {
+              "name": "channel_utilization",
+              "type": [
+                "null",
+                "float"
+              ],
+              "doc": "Percentage of time the channel was occupied by the radio's own activity (Activity Factor) or the activity of other radios.  Channel utilization MUST cover all user traffic, management traffic, and time the radio was unavailable for CSMA activities, including DIFS intervals, etc.  The metric is calculated and updated in this parameter at the end of the interval defined by Radio Statistics Measuring Interval.  The calculation of this metric MUST only use the data collected from the just completed interval.  If this metric is queried before it has been updated with an initial calculation, it MUST return -1",
+              "default": null
+            },
+            {
+              "name": "activity_factor",
+              "type": [
+                "null",
+                "float"
+              ],
+              "doc": "Percentage of time that the radio was transmitting or receiving Wi-Fi packets to/from associated clients. Activity factor MUST include all traffic that deals with communication between the radio and clients associated to the radio as well as management overhead for the radio, including NAV timers, beacons, probe responses,time for receiving devices to send an ACK, SIFC intervals, etc.",
+              "default": null
+            },
+            {
+              "name": "carrier_sense_threshold_exceeded",
+              "type": [
+                "null",
+                "float"
+              ],
+              "doc": "Percentage of time that the radio was unable to transmit or receive Wi-Fi packets to/from associated clients due to energy detection (ED) on the channel or clear channel assessment (CCA).",
+              "default": null
+            },
+            {
+              "name": "retransmission_metric",
+              "type": [
+                "null",
+                "float"
+              ],
+              "doc": "Percentage of packets that had to be re-transmitted. Multiple re-transmissions of the same packet count as one.  The metric is calculated and updated in this parameter at the end of the interval defined by Radio Statistics Measuring Interval.   The calculation of this metric MUST only use the data collected from the just completed interval.  If this metric is queried before it has been updated with an initial calculation, it MUST return -1. Units  in percentage",
+              "default": null
+            },
+            {
+              "name": "maximum_noise_floor_on_channel",
+              "type": [
+                "null",
+                "float"
+              ],
+              "doc": "Maximum noise on the channel during the measuring interval. Measured in dBm",
+              "default": null
+            },
+            {
+              "name": "minimum_noise_floor_on_channel",
+              "type": [
+                "null",
+                "float"
+              ],
+              "doc": "Minimum noise on the channel during the measuring interval. Measured in dBm",
+              "default": null
+            },
+            {
+              "name": "median_noise_floor_on_channel",
+              "type": [
+                "null",
+                "float"
+              ],
+              "doc": "Median noise on the channel during the measuring interval. Measured in dBm",
+              "default": null
+            }
+          ]
+        },
+        "type": "array"
+      }
+    }
+  ]
+}

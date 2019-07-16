@@ -1,0 +1,380 @@
+{
+  "namespace": "com.comcast.kestrel.odp.event",
+  "name": "InterfaceDevicesWifi",
+  "type": "record",
+  "doc": "Contains a list of zero of more reports for each device connected to a moca interface. Each report contains interface status and L2 counters",
+  "fields": [
+    {
+      "name": "header",
+      "type": {
+        "namespace": "com.comcast.kestrel",
+        "name": "CoreHeader",
+        "type": "record",
+        "doc": "Common information related to the event which MUST be included in any kestrel event. It allows some common processing at the system level, and some consistency for processing events.",
+        "fields": [
+          {
+            "name": "timestamp",
+            "type": [
+              "null",
+              {
+                "logicalType": "timestamp-millis",
+                "type": "long"
+              }
+            ],
+            "doc": "The UTC time stamp in milliseconds since Unix epoch (January 1, 1970 midnight) when the event is generated.",
+            "default": null
+          },
+          {
+            "name": "uuid",
+            "type": [
+              "null",
+              {
+                "name": "UUID",
+                "namespace": "com.comcast.kestrel.datatype",
+                "size": 16,
+                "type": "fixed"
+              }
+            ],
+            "doc": "Unique identifier for the event used for event de-duplication and tracing.",
+            "default": null
+          },
+          {
+            "name": "source",
+            "type": [
+              "null",
+              "string"
+            ],
+            "doc": "Source of this report - generally the application or process generating the event",
+            "default": null
+          }
+        ]
+      }
+    },
+    {
+      "name": "cpe_id",
+      "type": {
+        "namespace": "com.comcast.kestrel.odp",
+        "name": "CPEIdentifier",
+        "type": "record",
+        "doc": "Unique identifying fields for a CPE device. All fields are optional, but at least one field should be populated with a non null value",
+        "fields": [
+          {
+            "name": "mac_address",
+            "type": [
+              "null",
+              {
+                "name": "MacAddress",
+                "namespace": "com.comcast.kestrel.datatype",
+                "size": 6,
+                "type": "fixed"
+              }
+            ],
+            "doc": "Canonical (Identifying) MAC address for the gateway. (Eg, may be CM Mac for cable modems)",
+            "default": null
+          },
+          {
+            "name": "cpe_type",
+            "type": [
+              "null",
+              "string"
+            ],
+            "doc": "Contains the cpe type e.g. Extender or Gateway",
+            "default": null
+          },
+          {
+            "name": "cpe_parent",
+            "type": [
+              "null",
+              "com.comcast.kestrel.odp.CPEIdentifier"
+            ],
+            "doc": "If this device is a child device (it is managed by another CPE device), this field identifies the parent device. Canonical identifier for the CPE. (Eg, may be CM Mac for cable modems)",
+            "default": null
+          }
+        ]
+      }
+    },
+    {
+      "name": "data",
+      "type": {
+        "items": {
+          "namespace": "com.comcast.kestrel.odp",
+          "name": "InterfaceDeviceDataWifi",
+          "type": "record",
+          "doc": "Contains operational metrics and data collected about the WiFi physical interface for a specific connected device.",
+          "fields": [
+            {
+              "name": "device_id",
+              "type": {
+                "namespace": "com.comcast.kestrel.odp",
+                "name": "ConnectedDeviceIdentifier",
+                "type": "record",
+                "doc": "Identifies a connected device",
+                "fields": [
+                  {
+                    "name": "mac_address",
+                    "type": [
+                      "null",
+                      "com.comcast.kestrel.datatype.MacAddress"
+                    ],
+                    "doc": "MAC address of the conected device the report is related to",
+                    "default": null
+                  },
+                  {
+                    "name": "device_type",
+                    "type": [
+                      "null",
+                      "string"
+                    ],
+                    "doc": "Device Type connected to the Gateway [TR-181: Device.Hosts.Host.{i}.X_RDKCENTRAL_COM-DeviceType]",
+                    "default": null
+                  }
+                ]
+              }
+            },
+            {
+              "name": "timestamp",
+              "type": [
+                "null",
+                {
+                  "logicalType": "timestamp-millis",
+                  "type": "long"
+                }
+              ],
+              "doc": "The UTC time stamp in milliseconds since Unix epoch (January 1, 1970 midnight) when the record data is generated.",
+              "default": null
+            },
+            {
+              "name": "service_type",
+              "type": {
+                "doc": "Network Service type",
+                "name": "NetworkServiceType",
+                "namespace": "com.comcast.kestrel.odp.datatype",
+                "symbols": [
+                  "PRIVATE",
+                  "PUBLIC",
+                  "HOME_SECURITY"
+                ],
+                "type": "enum"
+              },
+              "doc": "Indicates the service type"
+            },
+            {
+              "name": "interface_mac",
+              "type": "com.comcast.kestrel.datatype.MacAddress",
+              "doc": "MAC address of the gateway interface connected to the end device. [TR-181: Device.WiFi.SSID.{i}.BSSID]"
+            },
+            {
+              "name": "interface_parameters",
+              "type": [
+                "null",
+                {
+                  "namespace": "com.comcast.kestrel.odp",
+                  "name": "InterfaceDeviceParametersWifi",
+                  "type": "record",
+                  "doc": "Contains settings collected for a WiFi interface that has a data link connection to a device",
+                  "fields": [
+                    {
+                      "name": "operating_standard",
+                      "type": [
+                        "null",
+                        {
+                          "doc": "802.11 operating standard [TR-181: Device.WiFi.Radio.{i}.OperatingStandards]",
+                          "name": "WifiOperatingStandard",
+                          "namespace": "com.comcast.kestrel.odp.datatype",
+                          "symbols": [
+                            "a",
+                            "b",
+                            "g",
+                            "n",
+                            "ac"
+                          ],
+                          "type": "enum"
+                        }
+                      ],
+                      "doc": "802.11 operating standard of a device [TR-181: Device.WiFi.AccessPoint.index.AssociatedDevice.index.X_COMCAST-COM_OperatingStandard]",
+                      "default": null
+                    },
+                    {
+                      "name": "operating_channel_bandwidth",
+                      "type": [
+                        "null",
+                        {
+                          "doc": "802.11 operating channel bandwidth [TR-181: Device.WiFi.Radio.{i}.OperatingChannelBandwidth]",
+                          "name": "WifiOperatingChannelBandwidth",
+                          "namespace": "com.comcast.kestrel.odp.datatype",
+                          "symbols": [
+                            "_20MHz",
+                            "_40MHz",
+                            "_80MHz",
+                            "_80_80MHz",
+                            "_160MHz"
+                          ],
+                          "type": "enum"
+                        }
+                      ],
+                      "doc": "802.11 operating channel bandwidth of a device [TR-181: Device.WiFi.AccessPoint.index.AssociatedDevice.index.X_COMCAST-COM_OperatingChannelBandwidth]",
+                      "default": null
+                    },
+                    {
+                      "name": "frequency_band",
+                      "type": [
+                        "null",
+                        {
+                          "doc": "802.11 operating channel bandwidth [TR-181: Device.WiFi.Radio.{i}.OperatingFrequencyBand]",
+                          "name": "WifiRadioFrequencyBand",
+                          "namespace": "com.comcast.kestrel.odp.datatype",
+                          "symbols": [
+                            "_2_4GHz",
+                            "_5GHz"
+                          ],
+                          "type": "enum"
+                        }
+                      ],
+                      "doc": "802.11 frequency band in use by interface [TR-181: Device.Wifi.Radio.{i}.OperatingFrequencyBand]",
+                      "default": null
+                    },
+                    {
+                      "name": "channel",
+                      "type": [
+                        "null",
+                        "int"
+                      ],
+                      "doc": "802.11 channel in use by this interface [TR-181: Device.WiFi.Radio.{i}.Channel]",
+                      "default": null
+                    },
+                    {
+                      "name": "ssid",
+                      "type": [
+                        "null",
+                        "string"
+                      ],
+                      "doc": "SSID name associated with this interface [TR-181: Device.WiFi.SSID.{i}.SSID]",
+                      "default": null
+                    }
+                  ]
+                }
+              ],
+              "doc": "Contains the settings that are used on this physical interface with the end device",
+              "default": null
+            },
+            {
+              "name": "interface_metrics",
+              "type": [
+                "null",
+                {
+                  "namespace": "com.comcast.kestrel.odp",
+                  "name": "InterfaceDeviceMetricsWifi",
+                  "type": "record",
+                  "doc": "Contains operational metrics collected for a WiFi interface that has data link connection to a device",
+                  "fields": [
+                    {
+                      "name": "authenticated",
+                      "type": [
+                        "null",
+                        "boolean"
+                      ],
+                      "doc": "Indicates whether the connected device is authenticated to the wifi interface. [TR-181: Commonly found in Device.WiFi.AccessPoint.{i}.AssociatedDevice.{i}.AuthenticationState]",
+                      "default": null
+                    },
+                    {
+                      "name": "authentication_failures",
+                      "type": [
+                        "null",
+                        "int"
+                      ],
+                      "doc": "This parameter indicates the total number of authentication failures. [TR-181: Device.WiFi.AccessPoint.{i}.AssociatedDevice.{i}.X_COMCAST-COM_AuthenticationFailures]",
+                      "default": null
+                    },
+                    {
+                      "name": "data_frames_sent_ack",
+                      "type": [
+                        "null",
+                        "long"
+                      ],
+                      "doc": "Indicates the total number of MSDU frames acknowledged by the device [TR-181: Device.WiFi.AccessPoint.{i}.AssociatedDevice.{i}.X_COMCAST-COM_DataFramesSentAck]",
+                      "default": null
+                    },
+                    {
+                      "name": "data_frames_sent_no_ack",
+                      "type": [
+                        "null",
+                        "long"
+                      ],
+                      "doc": "Indicates the total number of MSDU frames retransmitted out of the interface (i.e., marked as duplicate and non-duplicate) and not acknowledged by the device. [TR-181: Device.WiFi.AccessPoint.{i}.AssociatedDevice.{i}.X_COMCAST-COM_DataFramesSentNoAck]",
+                      "default": null
+                    },
+                    {
+                      "name": "disassociations",
+                      "type": [
+                        "null",
+                        "int"
+                      ],
+                      "doc": "This parameter represents the total number of client disassociations. [TR-181: Device.WiFi.AccessPoint.{i}.AssociatedDevice.{i}.X_COMCAST-COM_Disassociations]",
+                      "default": null
+                    },
+                    {
+                      "name": "interference_sources",
+                      "type": {
+                        "items": "string",
+                        "type": "array"
+                      },
+                      "doc": "Array of possible interference soruces as detected by the access point. [TR-181: Device.WiFi.AccessPoint.{i}.AssociatedDevice.{i}.X_COMCAST-COM_InterferenceSources]"
+                    },
+                    {
+                      "name": "rx_rate",
+                      "type": [
+                        "null",
+                        "float"
+                      ],
+                      "doc": "RX PHY rate of gateway interface in Mbps. (From Connected Device to Gateway/AP) [TR-181: Commonly found in Device.WiFi.AccessPoint.{i}.AssociatedDevice.{i}.LastDataUplinkRate]",
+                      "default": null
+                    },
+                    {
+                      "name": "tx_rate",
+                      "type": [
+                        "null",
+                        "float"
+                      ],
+                      "doc": "TX PHY rate of gateway interface in Mbps. (From Gateway/AP to Connected Device). [TR-181: Commonly found in Device.WiFi.AccessPoint.{i}.AssociatedDevice.{i}.LastDataDownlinkRate]",
+                      "default": null
+                    },
+                    {
+                      "name": "retransmissions",
+                      "type": [
+                        "null",
+                        "int"
+                      ],
+                      "doc": "The number of packets that had to be re-transmitted, from the last 100 packets sent to the associated device. Multiple re-transmissions of the same packet count as one. [TR-181: Commonly found in Device.WiFi.AccessPoint.{i}.AssociatedDevice.{i}.Retransmissions]",
+                      "default": null
+                    },
+                    {
+                      "name": "signal_strength",
+                      "type": [
+                        "null",
+                        "float"
+                      ],
+                      "doc": "An indicator of radio signal strength of the uplink from the connected device to the access point, measured in dBm. [TR-181: Commonly found in Device.WiFi.AccessPoint.{i}.AssociatedDevice.{i}.SignalStrength]",
+                      "default": null
+                    },
+                    {
+                      "name": "snr",
+                      "type": [
+                        "null",
+                        "float"
+                      ],
+                      "doc": "Signal to noise ratio. Compares the level of the Wi-Fi signal to the level of background noise. (measured in decibels dB) [TR-181: Device.WiFi.AccessPoint.{i}.AssociatedDevice.{i}.X_COMCAST-COM_SNR]",
+                      "default": null
+                    }
+                  ]
+                }
+              ],
+              "doc": "Operational metrics for the physical interface for the end device",
+              "default": null
+            }
+          ]
+        },
+        "type": "array"
+      }
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+[gerrit]
+host:gerrit.teamccp.com
+port=29418
+project=rdk/rdkb/components/cpc/harvester/generic
+defaultbranch=master
+defaultrebase=0

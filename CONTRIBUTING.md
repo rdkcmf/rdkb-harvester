@@ -1,7 +1,7 @@
 Contributing
 ============
 
-If you wish to make code contributions to this project, the master source is hosted at [code.rdkcentral.com](https://code.rdkcentral.com/r/#/admin/projects/rdkb/components/generic/Harvester).
+If you wish to make code contributions to this project, the master source is hosted at [code.rdkcentral.com](https://code.rdkcentral.com/r/#/admin/projects/rdkb/components/generic/harvester).
 You can submit your changes for review via that site.
 
 Please follow the [workflow](https://wiki.rdkcentral.com/display/CMF/Gerrit+Development+Workflow) when making a contribution.

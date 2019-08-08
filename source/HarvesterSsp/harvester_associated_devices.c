@@ -487,7 +487,15 @@ int GetWiFiApGetAssocDevicesData(int ServiceType, int wlanIndex, char* pSsid)
     int ret = wifi_getApEnable(wlanIndex, &enabled);
     if (ret || enabled == FALSE)
     {
-        CcspHarvesterTrace(("RDK_LOG_INFO, Harvester %s : SSID %s is NOT ENABLED  or ERROR retured %d \n",__FUNCTION__, pSsid, ret));
+	if ( ServiceType == PUBLIC )
+	{
+		/* Disabling this log as Public wifi SSIDs are disabled by default */
+		CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s : SSID %s is NOT ENABLED  or ERROR retured %d \n",__FUNCTION__, pSsid, ret));
+	}
+	else
+	{
+		CcspHarvesterTrace(("RDK_LOG_INFO, Harvester %s : SSID %s is NOT ENABLED  or ERROR retured %d \n",__FUNCTION__, pSsid, ret));
+	}
         return ret;
     }
 

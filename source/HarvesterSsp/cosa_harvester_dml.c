@@ -98,6 +98,15 @@ ANSC_STATUS SetNVRamULONGConfiguration(char* setting, ULONG value)
 {
     int retPsmSet = CCSP_SUCCESS;
     char psmValue[32] = {};
+    ULONG psm_value = 0;
+
+    retPsmSet = GetNVRamULONGConfiguration(setting,&psm_value);
+
+    if ((retPsmSet == CCSP_SUCCESS) && (psm_value == value))
+    {
+      CcspHarvesterConsoleTrace(("%s PSM value is same for setting [%s] Value [%d]\n",__FUNCTION__,setting, value));
+      return retPsmSet;
+    }
 
     sprintf(psmValue,"%d",value);
     retPsmSet = PSM_Set_Record_Value2(bus_handle,g_Subsystem, setting, ccsp_string, psmValue);

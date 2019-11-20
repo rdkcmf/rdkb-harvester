@@ -33,7 +33,8 @@ libHarvesterSsp_la_SOURCES = cosa_harvester_dml.c  \
                              harvester_neighboring_ap_avropack.c  \
                              harvester_radio_traffic_avropack.c  \
                              ssp_action.c   \
-                             ssp_messagebus_interface.c
+                             ssp_messagebus_interface.c  \
+                             dm_pack_datamodel.c
 
 libHarvesterSsp_la_LDFLAGS = -lccsp_common -lm -lpthread -lavro -lhal_wifi -lmsgpackc -ltrower-base64 -luuid
 libHarvesterSsp_la_CFLAGS = -I${top_srcdir}/include

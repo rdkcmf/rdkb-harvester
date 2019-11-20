@@ -26,6 +26,7 @@
 #include "ssp_global.h"
 #include "dslh_dmagnt_interface.h"
 #include "ccsp_trace.h"
+#include "dm_pack_create_func.h"
 
 /*----------------------------------------------------------------------------*/
 /*                                   Macros                                   */
@@ -170,11 +171,11 @@ ANSC_STATUS ssp_engage()
     }
 
     returnStatus =
-        pDslhCpeController->RegisterCcspDataModel
+        pDslhCpeController->RegisterCcspDataModel2
             (
                 (ANSC_HANDLE)pDslhCpeController,
                 CrName,                                    /* CCSP_DBUS_INTERFACE_CR, CCSP CR ID */
-                CCSP_DATAMODEL_XML_FILE,                   /* Data Model XML file. Can be empty if only base data model supported. */
+                DMPackCreateDataModelXML,                 /* Comcast generated code to create XML. */
                 CCSP_COMPONENT_NAME,            /* Component Name    */
                 CCSP_COMPONENT_VERSION,         /* Component Version */
                 CCSP_COMPONENT_PATH,            /* Component Path    */

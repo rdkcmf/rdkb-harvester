@@ -478,7 +478,7 @@ int GetWiFiApGetAssocDevicesData(int ServiceType, int wlanIndex, char* pSsid)
 
     BOOL enabled = FALSE;
     wifi_associated_dev_t *wifi_associated_dev_array = NULL;
-    UINT array_size = 1;
+    UINT array_size = 0;
     int radioIndex = 0;
     char interfaceMAC[128] = {0};
     ULONG channel = 0;

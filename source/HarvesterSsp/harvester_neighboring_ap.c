@@ -401,7 +401,7 @@ int GetRadioNeighboringAPData(int radioIndex, char* radioIfName)
     BOOL enabled = FALSE;
     wifi_neighbor_ap2_t *neighbor_ap_array=NULL;
 
-    UINT array_size = 1;
+    UINT array_size = 0;
     ULONG channel = 0;
     char freqband[128] = {0};
 
@@ -430,7 +430,7 @@ int GetRadioNeighboringAPData(int radioIndex, char* radioIfName)
 
 
     ret = wifi_getNeighboringWiFiDiagnosticResult2(radioIndex, &neighbor_ap_array, &array_size);
-    if(neighbor_ap_array && array_size>0) 
+    if(( 0 == ret ) && ( NULL != neighbor_ap_array ) && ( array_size > 0 ) ) 
     {
         add_to_nap_list(radioIfName, array_size, neighbor_ap_array, freqband, channel);
 

@@ -486,7 +486,7 @@ int GetRadioTrafficData(int radioIndex)
 
     radio_traffic_stats = (wifi_radioTrafficStats2_t*) malloc(sizeof(wifi_radioTrafficStats2_t));
     ret = wifi_getRadioTrafficStats2(radioIndex, radio_traffic_stats);
-    if(radio_traffic_stats) 
+    if(( 0 == ret ) && ( NULL != radio_traffic_stats ) ) 
     {
         ret = add_to_rt_list( radioIndex,  enabled, freqband, channel, opchanbw, radio_traffic_stats);
         CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, ************RadioTraffic Data Begins************* \n"));
@@ -526,6 +526,13 @@ int GetRadioTrafficData(int radioIndex)
     } // end of if statement
     else
     {
+        //Free allocated memory when failure case
+        if( NULL != radio_traffic_stats )
+        {
+            free(radio_traffic_stats);
+            radio_traffic_stats = NULL;
+        }
+
         CcspHarvesterTrace(("RDK_LOG_ERROR, Harvester %s : wifi_getRadioTrafficStats2 Return[%d] \n",__FUNCTION__ , ret));
     } 
 

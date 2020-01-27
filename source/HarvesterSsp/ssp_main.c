@@ -34,6 +34,11 @@
 #include "harvester.h"
 #include "ccsp_custom_logs.h"
 #include "ccsp_harvesterLog_wrapper.h"
+
+#ifdef INCLUDE_BREAKPAD
+#include "breakpad_wrapper.h"
+#endif
+
 /*----------------------------------------------------------------------------*/
 /*                                   Macros                                   */
 /*----------------------------------------------------------------------------*/
@@ -132,6 +137,10 @@ int msgBusInit(const char *name)
     pComponentName = name;
     if ( bRunAsDaemon ) 
         daemonize();
+
+#ifdef INCLUDE_BREAKPAD
+    breakpad_ExceptionHandler();
+#endif /* * INCLUDE_BREAKPAD */
 
     cmd_dispatch('e');
 

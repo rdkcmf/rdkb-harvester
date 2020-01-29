@@ -208,7 +208,7 @@ void harvester_report_neighboringap(struct neighboringapdata *head)
   char * serviceName = "harvester";
   char * dest = "event:raw.kestrel.GatewayAccessPointNeighborScanReport";
   uuid_t transaction_id;
-  char trans_id[36];
+  char trans_id[37] = {0};
   char * contentType = "avro/binary"; // contentType "application/json", "avro/binary"
 
   CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s : ENTER \n", __FUNCTION__ ));

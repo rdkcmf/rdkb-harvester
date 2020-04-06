@@ -129,7 +129,7 @@ ULONG NumberofNAPDevicesinLinkedList(struct neighboringapdata* head)
 
 avro_writer_t prepare_nap_writer()
 {
-  avro_writer_t writer;
+  avro_writer_t writer = 0;
   long lsSize = 0;
 
   CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s : ENTER \n", __FUNCTION__ ));
@@ -147,6 +147,15 @@ avro_writer_t prepare_nap_writer()
     /* seek through file and get file size*/
     fseek( fp , 0L , SEEK_END);
     lsSize = ftell( fp );
+   
+    /* Coverity Fix CID: 70128 NEGATIVE RETURN */
+    if(lsSize < 0)
+    {
+         fputs("lsSize attain Negative Value", stderr);
+          fclose(fp);
+          return writer;
+    }
+
 
     /*back to the start of the file*/
     rewind( fp );
@@ -167,6 +176,9 @@ avro_writer_t prepare_nap_writer()
 
     //Master report/datum
     avro_schema_t neighborAp_device_report_schema = NULL;
+    
+    /* Coverity Fix CID: 135280 STRING_NULL*/
+    nap_schema_buffer[strlen(nap_schema_buffer)+1] = '\0';
     avro_schema_from_json(nap_schema_buffer, strlen(nap_schema_buffer),
                         &neighborAp_device_report_schema, &error);
 

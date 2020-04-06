@@ -39,6 +39,8 @@
 #include "breakpad_wrapper.h"
 #endif
 
+#define LOG_LEVEL_MAX 4096
+
 /*----------------------------------------------------------------------------*/
 /*                                   Macros                                   */
 /*----------------------------------------------------------------------------*/
@@ -199,7 +201,13 @@ void HarvesterLog(char *msg)
     char LogMsg_arr[4096] = {0};
     char *LogMsg = LogMsg_arr;
     char LogLevel[4096] = {0};
-    strcpy (LogLevel, msg);
+    /* Coverity Fix CID: 135571 STRING_OVERFLOW */
+    if(strlen(msg) < LOG_LEVEL_MAX)
+    {
+      strcpy (LogLevel, msg);
+    }
+
+   
     strtok_r (LogLevel, ",",&LogMsg);
 
     if( strcmp(LogLevel, "RDK_LOG_ERROR") == 0)   

@@ -1663,11 +1663,19 @@ NeighboringAP_GetParamStringValue
             if (decodesize < *pUlSize)
             {
                 uint8_t* base64buffer = malloc((*pUlSize) * sizeof(uint8_t));
-                b64_encode( (uint8_t*)GetNeighborAPAvroBuf(), GetNeighborAPAvroBufSize(), base64buffer);
-                base64buffer[(*pUlSize) - 1] = '\0';
-                AnscCopyString(pValue, (char*)base64buffer);
-                CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, pValue Buffer Size [%d] \n", (int)strlen(pValue)));
-                free(base64buffer);
+                 /*Coverity Fix CID:72050 NULL_RETURNS */
+                if(base64buffer != NULL)
+                { 
+                  b64_encode( (uint8_t*)GetNeighborAPAvroBuf(), GetNeighborAPAvroBufSize(), base64buffer);
+                  base64buffer[(*pUlSize) - 1] = '\0';
+                  AnscCopyString(pValue, (char*)base64buffer);
+                  CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, pValue Buffer Size [%d] \n", (int)strlen(pValue)));
+                  free(base64buffer);
+                }
+                else
+                {                
+                        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s  : base64buffer NULL_RETURNS \n", __FUNCTION__ ));
+                }       
                 CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s : EXIT \n", __FUNCTION__ ));
                 return FALSE;
             }

@@ -258,8 +258,8 @@ void harvester_report_associateddevices(struct associateddevicedata *head, char*
   tstamp_av_main = tstamp_av_main/1000;
 
   avro_value_set_long(&optional, tstamp_av_main );
-  
-  CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, timestamp = %ld\n", tstamp_av_main ));
+   /* Coverity Fix CID: 124833  PRINTF_ARGS*/ 
+  CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, timestamp = %lld\n", tstamp_av_main ));
   CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, timestamp = ""%" PRId64 "\n", tstamp_av_main ));
 
   CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, timestamp\tType: %d\n", avro_value_get_type(&optional)));

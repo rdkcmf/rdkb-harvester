@@ -368,7 +368,8 @@ int add_to_rt_list(int radioIndex, BOOL enabled, char* freqband, ULONG channel, 
             if (ret)
             {
                 free(ptr); /*RDKB-7465, CID-32940, free unused resource*/
-                CcspHarvesterTrace(("RDK_LOG_ERROR, Harvester %s : Radio %s does not have a valid BSSID  or ERROR retured %d \n",__FUNCTION__ , radioIndex, ret));
+                /* Coverity Fix CID: 124997  PRINTF_ARGS */
+                CcspHarvesterTrace(("RDK_LOG_ERROR, Harvester %s : Radio %d does not have a valid BSSID  or ERROR retured %d \n",__FUNCTION__ , radioIndex, ret));
                 return ret;
             }
 

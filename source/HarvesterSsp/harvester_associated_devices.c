@@ -387,7 +387,6 @@ void add_to_list(struct associateddevicedata **headnode, char* ssid, ULONG devic
 
     CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, SSID Input[%s] Devices[%ld] \n", ssid, devices));
     struct associateddevicedata *ptr = malloc(sizeof(*ptr));
-    memset( ptr, 0, sizeof(*ptr));
     if (ptr == NULL)
     {
         CcspHarvesterTrace(("RDK_LOG_ERROR, Harvester %s :  Linked List Allocation Failed \n", __FUNCTION__ ));
@@ -395,6 +394,8 @@ void add_to_list(struct associateddevicedata **headnode, char* ssid, ULONG devic
     }
     else
     {
+        /* Coverity Fix CID: 60030 NULL_RETURNS */
+        memset( ptr, 0, sizeof(*ptr));
         ptr->sSidName = strdup(ssid);
         ptr->bssid = strdup(intfcmacid);
         ptr->numAssocDevices = devices;

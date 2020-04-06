@@ -118,7 +118,7 @@ int NumberofRTElementsinLinkedList(struct radiotrafficdata* head)
 
 avro_writer_t prepare_rt_writer()
 {
-  avro_writer_t writer;
+  avro_writer_t writer = 0;
   long lsSize = 0;
 
   CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s : ENTER \n", __FUNCTION__ ));
@@ -136,6 +136,15 @@ avro_writer_t prepare_rt_writer()
     /* seek through file and get file size*/
     fseek( fp , 0L , SEEK_END);
     lsSize = ftell( fp );
+
+       /* Coverity Fix CID: 72156  NEGATIVE RETURN */
+    if(lsSize < 0)
+    {
+        fputs("lsSize attain Negative Value", stderr);
+        fclose(fp);
+         return writer;
+    }
+ 
 
     /*back to the start of the file*/
     rewind( fp );
@@ -156,6 +165,10 @@ avro_writer_t prepare_rt_writer()
 
     //Master report/datum
     avro_schema_t radiotraffic_device_report_schema = NULL;
+    
+     /* Coverity Fix CID: 135349 STRING_NULL*/
+    rt_schema_buffer[strlen(rt_schema_buffer)+1] = '\0';
+
     avro_schema_from_json(rt_schema_buffer, strlen(rt_schema_buffer),
                         &radiotraffic_device_report_schema, &error);
 
@@ -242,8 +255,8 @@ void harvester_report_radiotraffic(struct radiotrafficdata *head)
   tstamp_av_main = tstamp_av_main/1000;
 
   avro_value_set_long(&optional, tstamp_av_main );
-  
-  CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, timestamp = %ld\n", tstamp_av_main ));
+   /* Coverity Fix CID: 125074  PRINTF_ARGS */
+  CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, timestamp = %lld\n", tstamp_av_main ));
   CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, timestamp\tType: %d\n", avro_value_get_type(&optional)));
   if ( CHK_AVRO_ERR ) CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, %s\n", avro_strerror()));
 
@@ -418,7 +431,8 @@ void harvester_report_radiotraffic(struct radiotrafficdata *head)
       int64_t tstamp_av = (int64_t) ptr->timestamp.tv_sec * 1000000 + (int64_t) ptr->timestamp.tv_usec;
       tstamp_av = tstamp_av/1000;
       avro_value_set_long(&optional, tstamp_av);
-      CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, timestamp = %ld\n", tstamp_av));
+       /* Coverity Fix CID: 124885  PRINTF_ARGS*/
+      CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, timestamp = %lld\n", tstamp_av));
       CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, timestamp\tType: %d\n", avro_value_get_type(&optional)));
       if ( CHK_AVRO_ERR ) CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, %s\n", avro_strerror()));
 

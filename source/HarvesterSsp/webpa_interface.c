@@ -40,7 +40,6 @@ char deviceMAC[32]={'\0'};
 static void checkComponentHealthStatus(char * compName, char * dbusPath, char *status, int *retStatus);
 static void waitForEthAgentComponentReady();
 static int check_ethernet_wan_status();
-static void macToLower(char macValue[]);
 
 libpd_instance_t client_instance;
 static void *handle_parodus();
@@ -403,7 +402,7 @@ char * getDeviceMac()
         fd = s_sysevent_connect(&token);
         if(CCSP_SUCCESS == check_ethernet_wan_status() && sysevent_get(fd, token, "eth_wan_mac", deviceMACValue, sizeof(deviceMACValue)) == 0 && deviceMACValue[0] != '\0')
         {
-            macToLower(deviceMACValue);
+            AnscMacToLower(deviceMAC, deviceMACValue, sizeof(deviceMAC));
             CcspTraceInfo(("deviceMAC is %s\n", deviceMAC));
         }
         else
@@ -433,7 +432,7 @@ char * getDeviceMac()
                 
                 }
                 CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Calling macToLower to get deviceMacId\n"));
-                macToLower(parameterval[0]->parameterValue);
+                AnscMacToLower(deviceMAC, parameterval[0]->parameterValue, sizeof(deviceMAC));
                 if(dstComp)
                 {
                     AnscFreeMemory(dstComp);
@@ -462,38 +461,5 @@ char * getDeviceMac()
     CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s EXIT\n", __FUNCTION__ ));
 
     return deviceMAC;
-}
-
-void macToLower(char macValue[])
-{
-    CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s ENTER\n", __FUNCTION__ ));
-
-    int i = 0;
-    int j;
-    char *token[32];
-    char tmp[32];
-    strncpy(tmp, macValue,sizeof(tmp));
-    token[i] = strtok(tmp, ":");
-    if(token[i]!=NULL)
-    {
-        strncpy(deviceMAC, token[i],sizeof(deviceMAC)-1);
-        deviceMAC[31]='\0';
-        i++;
-    }
-    while ((token[i] = strtok(NULL, ":")) != NULL) 
-    {
-        strncat(deviceMAC, token[i],sizeof(deviceMAC)-1);
-        deviceMAC[31]='\0';
-        i++;
-    }
-    deviceMAC[31]='\0';
-    for(j = 0; deviceMAC[j]; j++)
-    {
-        deviceMAC[j] = tolower(deviceMAC[j]);
-    }
-    
-    CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Inside macToLower:: Device MAC: %s check\n",deviceMAC));
-    CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s EXIT\n", __FUNCTION__ ));
-
 }
 

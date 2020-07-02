@@ -88,10 +88,8 @@ void sendWebpaMsg(char *serviceName, char *dest, char *trans_id, char *contentTy
     CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s ENTER\n", __FUNCTION__ ));
     CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, <======== Start of sendWebpaMsg =======>\n"));
     CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, deviceMAC *********:%s\n",deviceMAC));
-    if(serviceName!= NULL){
     	CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, serviceName :%s\n",serviceName));
-		snprintf(source, sizeof(source), "mac:%s/%s", deviceMAC, serviceName);
-	}
+	snprintf(source, sizeof(source), "mac:%s/%s", deviceMAC, serviceName);
 	if(dest!= NULL){
     	CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, dest :%s\n",dest));
 	}

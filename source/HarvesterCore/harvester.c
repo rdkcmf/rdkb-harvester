@@ -23,6 +23,7 @@
 #if defined(_INTEL_WAV_)
 #include "wifi_hal.h"
 #endif
+#include "safec_lib_common.h"
 
 int consoleDebugEnable = 0;
 FILE* debugLogFile;
@@ -30,35 +31,51 @@ FILE* debugLogFile;
 int main(int argc, char* argv[])
 {
     debugLogFile = stderr;
-
     int idx = 0;
+    errno_t rc = -1;
+    int ind = -1;
+    int debug_len = strlen( "-DEBUG");
+    int log_len =   strlen( "-LOGFILE");
     for (idx = 0; idx < argc; idx++)
     {
-        if ( (strcmp(argv[idx], "-DEBUG") == 0) )
+        rc = strcmp_s("-DEBUG",debug_len,argv[idx],&ind);
+        ERR_CHK(rc);
+        if ((!ind) && (rc == EOK))
         {
-            consoleDebugEnable = 1;
-            fprintf(stderr, "DEBUG ENABLE ON \n");
+           consoleDebugEnable = 1;
+           fprintf(debugLogFile, "DEBUG ENABLE ON \n");
         }
-        else if ( (strcmp(argv[idx], "-LOGFILE") == 0) )
+        else
         {
-            // We assume argv[1] is a filename to open
-            debugLogFile = fopen( argv[idx + 1], "a+" );
-
-            /* fopen returns 0, the NULL pointer, on failure */
-            if ( debugLogFile == 0 )
-            {
-                debugLogFile = stderr;
+           rc = strcmp_s("-LOGFILE",log_len,argv[idx],&ind);
+           ERR_CHK(rc);
+           if ((!ind) && (rc == EOK))
+           {
+             if( (idx+1) < argc )
+             {
+                // We assume argv[1] is a filename to open
+                FILE *fp = fopen( argv[idx + 1], "a+" );
+                /* fopen returns 0, the NULL pointer, on failure */
+                if (!fp )
+                {
+                  fprintf(debugLogFile, "Cannot open -LOGFILE %s\n", argv[idx+1]);
+                }
+                else
+                {
+                  debugLogFile = fp;
+                  fprintf(debugLogFile, "Log File [%s] Opened for Writing in Append Mode \n",  argv[idx+1]);
+                }
+             }
+             else
+             {
                 fprintf(debugLogFile, "Invalid Entry for -LOGFILE input \n" );
-            }
-            else 
-            {
-                fprintf(debugLogFile, "Log File [%s] Opened for Writing in Append Mode \n",  argv[idx+1]);
-            }
-
+             }
+           }
         }
     }
 
     fprintf(stderr, "RDK_LOG_DEBUG, Registering Harvester component '%s' with CR ..\n", HARVESTER_COMPONENT_NAME);
+
 
     msgBusInit(HARVESTER_COMPONENT_NAME);
        
@@ -90,7 +107,7 @@ int main(int argc, char* argv[])
 
     if(debugLogFile)
     {
-        fclose(debugLogFile);
+       fclose(debugLogFile);
     }
 
     fprintf(stderr, "RDK_LOG_DEBUG, Harvester %s EXIT\n", __FUNCTION__ );

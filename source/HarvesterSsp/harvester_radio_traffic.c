@@ -33,6 +33,8 @@
 #include "harvester_avro.h"
 #include "ccsp_harvesterLog_wrapper.h"
 #include "report_common.h"
+#include "safec_lib_common.h"
+
 
 ULONG RISReportingPeriodDefault = DEFAULT_POLLING_INTERVAL;
 ULONG RISPollingPeriodDefault = DEFAULT_REPORTING_INTERVAL;
@@ -79,12 +81,10 @@ extern ANSC_STATUS SetRISReportingPeriodInNVRAM(ULONG pReportingVal);
 
 static void WaitForPthreadConditionTimeoutRIS()
 {
-    struct timespec _ts;
-    struct timespec _now;
+    struct timespec _ts = { 0 };
+    struct timespec _now = { 0 };
     int n;
 
-    memset(&_ts, 0, sizeof(struct timespec));
-    memset(&_now, 0, sizeof(struct timespec));
 
     pthread_mutex_lock(&risMutex);
 
@@ -319,19 +319,25 @@ int getRadioBssid(int radioIndex, char* radio_BSSID)
 {
     char datecmd[128] = {0};
     int ret = 0;
+    errno_t rc = -1;
     CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s ENTER\n", __FUNCTION__ ));
 
     if(strlen(radio_BSSID) == 0)
     {   
         char radioIfName[128] = {0};
-        ret = wifi_getRadioIfName(radioIndex, (char*)&radioIfName);
+        ret = wifi_getRadioIfName(radioIndex, radioIfName);
         if (ret)
         {
             CcspHarvesterTrace(("RDK_LOG_ERROR, Harvester %s : wifi_getRadioIfName returned error [%d] \n",__FUNCTION__ , ret));
         }
         else
         {
-            snprintf(datecmd, sizeof(datecmd), "ifconfig -a %s | grep HWaddr | awk '{print $5}' | cut -c -17", radioIfName);
+            rc = sprintf_s(datecmd,sizeof(datecmd),"ifconfig -a %s | grep HWaddr | awk '{print $5}' | cut -c -17", radioIfName);
+            if(rc < EOK)
+            {
+              ERR_CHK(rc);
+              return -1;
+            }
             ret = _rtsyscmd(datecmd, radio_BSSID, 19);
             if(ret)
             {

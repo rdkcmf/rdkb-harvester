@@ -32,6 +32,8 @@
 #include "harvester_neighboring_ap.h"
 #include "harvester_avro.h"
 #include "ccsp_harvesterLog_wrapper.h"
+#include "safec_lib_common.h"
+
 
 static pthread_mutex_t napMutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t napCond = PTHREAD_COND_INITIALIZER;
@@ -78,12 +80,9 @@ extern ANSC_STATUS SetNAPReportingPeriodInNVRAM(ULONG pReportingVal);
 
 static void WaitForPthreadConditionTimeoutNAP()
 {
-    struct timespec _ts;
-    struct timespec _now;
+    struct timespec _ts = { 0 };
+    struct timespec _now = { 0 };
     int n;
-
-    memset(&_ts, 0, sizeof(struct timespec));
-    memset(&_now, 0, sizeof(struct timespec));
 
     pthread_mutex_lock(&napMutex);
 

@@ -26,6 +26,8 @@
 
 #include "libparodus.h"
 #include "webpa_interface.h"
+#include "safec_lib_common.h"
+
 
 #define MAX_PARAMETERNAME_LEN   512
 #define ETH_WAN_STATUS_PARAM "Device.Ethernet.X_RDKCENTRAL-COM_WAN.Enabled"
@@ -37,7 +39,7 @@ pthread_mutex_t webpa_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t device_mac_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 char deviceMAC[32]={'\0'};
-static void checkComponentHealthStatus(char * compName, char * dbusPath, char *status, int *retStatus);
+static void checkComponentHealthStatus(char * compName, char * dbusPath, char *status, int *retStatus, int status_size);
 static void waitForEthAgentComponentReady();
 static int check_ethernet_wan_status();
 
@@ -53,9 +55,16 @@ BOOL Cosa_FindDestComp(char* pObjName,char** ppDestComponentName, char** ppDestP
         int                         ret;
         int                         size = 0;
         componentStruct_t **        ppComponents = NULL;
-	char dst_pathname_cr[256] = {0};
+        char dst_pathname_cr[256] = {0};
+        errno_t rc = -1;
 
-    	sprintf(dst_pathname_cr, "%s%s", CCSP_AGENT_WEBPA_SUBSYSTEM, CCSP_DBUS_INTERFACE_CR);
+        rc = sprintf_s(dst_pathname_cr,sizeof(dst_pathname_cr),"%s%s", CCSP_AGENT_WEBPA_SUBSYSTEM, CCSP_DBUS_INTERFACE_CR);
+        if(rc < EOK)
+        {
+          ERR_CHK(rc);
+          return FALSE;
+        }
+		
 
         ret = CcspBaseIf_discComponentSupportingNamespace(bus_handle,
                                 dst_pathname_cr,
@@ -85,11 +94,18 @@ void sendWebpaMsg(char *serviceName, char *dest, char *trans_id, char *contentTy
     int retry_count = 0, backoffRetryTime = 0, c = 2;
     int sendStatus = -1;
     char source[MAX_PARAMETERNAME_LEN/2] = {'\0'};
+    errno_t rc = -1;
+
     CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s ENTER\n", __FUNCTION__ ));
     CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, <======== Start of sendWebpaMsg =======>\n"));
     CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, deviceMAC *********:%s\n",deviceMAC));
-    	CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, serviceName :%s\n",serviceName));
-	snprintf(source, sizeof(source), "mac:%s/%s", deviceMAC, serviceName);
+    CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, serviceName :%s\n",serviceName));
+    rc = sprintf_s(source,sizeof(source),"mac:%s/%s", deviceMAC, serviceName);
+    if(rc < EOK)
+    {
+      ERR_CHK(rc);
+      return;
+    }
 	if(dest!= NULL){
     	CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, dest :%s\n",dest));
 	}
@@ -113,7 +129,8 @@ void sendWebpaMsg(char *serviceName, char *dest, char *trans_id, char *contentTy
 
     if(wrp_msg != NULL)
     {
-		memset(wrp_msg, 0, sizeof(wrp_msg_t));
+        rc = memset_s(wrp_msg,sizeof(wrp_msg_t),0,sizeof(wrp_msg_t));
+        ERR_CHK(rc);
         wrp_msg->msg_type = WRP_MSG_TYPE__EVENT;
         wrp_msg->u.event.payload = (void *)payload;
         wrp_msg->u.event.payload_size = payload_len;
@@ -253,10 +270,22 @@ static void waitForEthAgentComponentReady()
     char status[32] = {'\0'};
     int count = 0;
     int ret = -1;
+    errno_t rc = -1;
+    int ind = -1;
+    int status_len = strlen("Green");
+	int health_status = -1;
     while(1)
     {
-        checkComponentHealthStatus(RDKB_ETHAGENT_COMPONENT_NAME, RDKB_ETHAGENT_DBUS_PATH, status,&ret);
-        if(ret == CCSP_SUCCESS && (strcmp(status, "Green") == 0))
+        checkComponentHealthStatus(RDKB_ETHAGENT_COMPONENT_NAME, RDKB_ETHAGENT_DBUS_PATH, status,&ret,sizeof(status));
+        if(ret == CCSP_SUCCESS)
+        {
+		   rc = strcmp_s("Green", status_len, status , &ind);
+		   ERR_CHK(rc);
+           if((ind == 0) && (rc == EOK))
+               health_status = 1 ;
+        }
+
+        if(health_status == 1)
         {
             CcspHarvesterTrace(("RDK_LOG_INFO, %s component health is %s, continue\n", RDKB_ETHAGENT_COMPONENT_NAME, status));
             break;
@@ -278,20 +307,30 @@ static void waitForEthAgentComponentReady()
     }
 }
 
-static void checkComponentHealthStatus(char * compName, char * dbusPath, char *status, int *retStatus)
+static void checkComponentHealthStatus(char * compName, char * dbusPath, char *status, int *retStatus,int status_size)
 {
 	int ret = 0, val_size = 0;
 	parameterValStruct_t **parameterval = NULL;
-	char *parameterNames[1] = {};
 	char tmp[MAX_PARAMETERNAME_LEN];
-	char str[MAX_PARAMETERNAME_LEN/2];     
-	char l_Subsystem[MAX_PARAMETERNAME_LEN/2] = { 0 };
+	char *parameterNames[1] = { tmp };
+	char str[MAX_PARAMETERNAME_LEN/2];
+    errno_t rc = -1;
 
-	sprintf(tmp,"%s.%s",compName, "Health");
-	parameterNames[0] = tmp;
+    rc = sprintf_s(tmp,sizeof(tmp),"%s.%s",compName, "Health");
+    if(rc < EOK)
+    {
+      ERR_CHK(rc);
+      *retStatus = CCSP_FAILURE;
+      return;
+    }
 
-	strncpy(l_Subsystem, "eRT.",sizeof(l_Subsystem));
-	snprintf(str, sizeof(str), "%s%s", l_Subsystem, compName);
+    rc = sprintf_s(str,sizeof(str),"eRT.%s", compName);
+    if(rc < EOK)
+    {
+      ERR_CHK(rc);
+      *retStatus = CCSP_FAILURE;
+      return;
+    }
 	CcspHarvesterTrace(("RDK_LOG_DEBUG, str is:%s\n", str));
 
 	ret = CcspBaseIf_getParameterValues(bus_handle, str, dbusPath,  parameterNames, 1, &val_size, &parameterval);
@@ -299,7 +338,15 @@ static void checkComponentHealthStatus(char * compName, char * dbusPath, char *s
 	if(ret == CCSP_SUCCESS)
 	{
 		CcspHarvesterTrace(("RDK_LOG_DEBUG, parameterval[0]->parameterName : %s parameterval[0]->parameterValue : %s\n",parameterval[0]->parameterName,parameterval[0]->parameterValue));
-		strcpy(status, parameterval[0]->parameterValue);
+        rc = strcpy_s(status,status_size,parameterval[0]->parameterValue);
+        if(rc != EOK)
+        {
+          ERR_CHK(rc);
+          *retStatus = CCSP_FAILURE;
+          free_parameterValStruct_t (bus_handle, val_size, parameterval);
+          return;
+        }
+
 		CcspHarvesterTrace(("RDK_LOG_DEBUG, status of component:%s\n", status));
 	}
 	free_parameterValStruct_t (bus_handle, val_size, parameterval);
@@ -317,24 +364,53 @@ static int check_ethernet_wan_status()
     componentStruct_t **        ppComponents = NULL;
     char dst_pathname_cr[256] = {0};
     char isEthEnabled[64]={'\0'};
+    errno_t rc = -1;
+    int is_WAN_Enabled = -1;
+    int ind = -1;
     
     if(0 == syscfg_init())
     {
-        if( 0 == syscfg_get( NULL, "eth_wan_enabled", isEthEnabled, sizeof(isEthEnabled)) && (isEthEnabled[0] != '\0' && strncmp(isEthEnabled, "true", strlen("true")) == 0))
+        if (( 0 == syscfg_get( NULL, "eth_wan_enabled", isEthEnabled, sizeof(isEthEnabled))) && (isEthEnabled[0] != '\0' ) )
         {
-            CcspHarvesterTrace(("RDK_LOG_INFO, Ethernet WAN is enabled\n"));
-            ret = CCSP_SUCCESS;
+           rc = strcmp_s("true", strlen("true"),isEthEnabled,&ind);
+           ERR_CHK(rc);
+           if ((ind == 0) && (rc == EOK))
+           {
+              CcspHarvesterTrace(("RDK_LOG_INFO, Ethernet WAN is enabled\n")); 
+              ret = CCSP_SUCCESS;
+           } 			  
         }
     }
     else
     {
         waitForEthAgentComponentReady();
-        sprintf(dst_pathname_cr, "%s%s", "eRT.", CCSP_DBUS_INTERFACE_CR);
+
+        rc = sprintf_s(dst_pathname_cr,sizeof(dst_pathname_cr),"eRT.%s", CCSP_DBUS_INTERFACE_CR);
+        if(rc < EOK)
+        {
+           ERR_CHK(rc);
+           return CCSP_FAILURE;
+        }
+		
         ret = CcspBaseIf_discComponentSupportingNamespace(bus_handle, dst_pathname_cr, ETH_WAN_STATUS_PARAM, "", &ppComponents, &size);
         if ( ret == CCSP_SUCCESS && size >= 1)
         {
-            strncpy(compName, ppComponents[0]->componentName, sizeof(compName)-1);
-            strncpy(dbusPath, ppComponents[0]->dbusPath, sizeof(compName)-1);
+            rc = strcpy_s(compName,sizeof(compName),ppComponents[0]->componentName);
+            if(rc != EOK)
+            {
+              ERR_CHK(rc);
+              free_componentStruct_t(bus_handle, size, ppComponents);
+              return CCSP_FAILURE;
+            }
+
+            rc = strcpy_s(dbusPath,sizeof(dbusPath),ppComponents[0]->dbusPath);
+            if(rc != EOK)
+            {
+              ERR_CHK(rc);
+              free_componentStruct_t(bus_handle, size, ppComponents);
+              return CCSP_FAILURE;
+            }
+
         }
         else
         {
@@ -347,16 +423,27 @@ static int check_ethernet_wan_status()
             ret = CcspBaseIf_getParameterValues(bus_handle, compName, dbusPath, getList, 1, &val_size, &parameterval);
             if(ret == CCSP_SUCCESS && val_size > 0)
             {
-                if(parameterval[0]->parameterValue != NULL && strncmp(parameterval[0]->parameterValue, "true", strlen("true")) == 0)
+                if(parameterval[0]->parameterValue != NULL )
                 {
-                    CcspHarvesterTrace(("RDK_LOG_INFO, Ethernet WAN is enabled\n"));
-                    ret = CCSP_SUCCESS;
+                    rc = strcmp_s("true", strlen("true"),parameterval[0]->parameterValue,&ind);
+                    ERR_CHK(rc);
+                    if( (ind == 0) && (rc == EOK))
+                    {
+                      is_WAN_Enabled = 1 ;
+                    }
+                }
+
+                if( is_WAN_Enabled == 1 )
+                {
+                   CcspHarvesterTrace(("RDK_LOG_INFO, Ethernet WAN is enabled\n"));
+                   ret = CCSP_SUCCESS;
                 }
                 else
                 {
-                    CcspHarvesterTrace(("RDK_LOG_INFO, Ethernet WAN is disabled\n"));
-                    ret = CCSP_FAILURE;
+                   CcspHarvesterTrace(("RDK_LOG_INFO, Ethernet WAN is disabled\n"));
+                   ret = CCSP_FAILURE;
                 }
+
             }
             else
             {

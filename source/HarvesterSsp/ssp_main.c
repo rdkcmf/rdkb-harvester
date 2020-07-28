@@ -34,12 +34,41 @@
 #include "harvester.h"
 #include "ccsp_custom_logs.h"
 #include "ccsp_harvesterLog_wrapper.h"
+#include "safec_lib_common.h"
+
 
 #ifdef INCLUDE_BREAKPAD
 #include "breakpad_wrapper.h"
 #endif
 
 #define LOG_LEVEL_MAX 4096
+
+#define NUM_OF_HARVESTER_LOG_TYPES (sizeof(harvester_loglevel_type_table)/sizeof(harvester_loglevel_type_table[0]))
+
+enum har_log_level_type_e {
+    LOGERROR,
+    LOGWARN,
+    LOGNOTICE,
+    LOGINFO,
+    LOGDEBUG,
+    LOGFATAL
+};
+
+typedef struct {
+  char     *name;
+  enum har_log_level_type_e   type;
+} HARVESTER_LOG_LEVEL_TYPE;
+
+HARVESTER_LOG_LEVEL_TYPE harvester_loglevel_type_table[] = {
+    { "RDK_LOG_ERROR",	LOGERROR },
+    { "RDK_LOG_WARN",	LOGWARN },
+    { "RDK_LOG_NOTICE", LOGNOTICE },
+    { "RDK_LOG_INFO",	LOGINFO },
+    { "RDK_LOG_DEBUG",	LOGDEBUG },
+    { "RDK_LOG_FATAL",	LOGFATAL }
+};
+
+
 
 /*----------------------------------------------------------------------------*/
 /*                                   Macros                                   */
@@ -61,6 +90,30 @@ static void daemonize(void);
 /*                             External Functions                             */
 /*----------------------------------------------------------------------------*/
 
+int harvester_loglevel_type_from_name(char *name, enum har_log_level_type_e *type_ptr)
+{
+  int rc = -1;
+  int ind = -1;
+  int i = 0;
+  size_t strsize = 0;
+  if((name == NULL) || (type_ptr == NULL))
+     return 0;
+
+  strsize = strlen(name);
+
+  for (i = 0 ; i < NUM_OF_HARVESTER_LOG_TYPES ; ++i)
+  {
+      rc = strcmp_s(name, strsize, harvester_loglevel_type_table[i].name, &ind);
+      ERR_CHK(rc);
+      if((rc == EOK) && (!ind))
+      {
+          *type_ptr = harvester_loglevel_type_table[i].type;
+          return 1;
+      }
+  }
+  return 0;
+}
+
 /**
  * @brief This functionality helps in approaching the bus deamon to create and engage the components.
  */
@@ -68,6 +121,8 @@ int  cmd_dispatch(int  command)
 {
     switch ( command )
     {
+        ANSC_STATUS  returnStatus	 = ANSC_STATUS_SUCCESS;
+
         case    'e' :
 
 #ifdef _ANSC_LINUX
@@ -75,27 +130,35 @@ int  cmd_dispatch(int  command)
 
             {
                 char                            CName[256];
+                errno_t                         rc = -1;
 
-                if ( g_Subsystem[0] != 0 )
+
+                rc = sprintf_s(CName,sizeof(CName), "%s%s", g_Subsystem, CCSP_COMPONENT_ID);
+                if(rc < EOK)
                 {
-                    _ansc_sprintf(CName, "%s%s", g_Subsystem, CCSP_COMPONENT_ID);
-                }
-                else
-                {
-                    _ansc_sprintf(CName, "%s", CCSP_COMPONENT_ID);
+                   ERR_CHK(rc);
+                   return -1;
                 }
 
-                ssp_Mbi_MessageBusEngage
+                returnStatus = ssp_Mbi_MessageBusEngage
                     ( 
                         CName,
                         CCSP_MSG_BUS_CFG,
                         CCSP_COMPONENT_PATH
                     );
+                if(ANSC_STATUS_SUCCESS != returnStatus)
+                   return -1;
+				
             }
 #endif
 
-            ssp_create();
-            ssp_engage();
+            returnStatus = ssp_create();
+            if(ANSC_STATUS_SUCCESS != returnStatus)
+              return -1;
+
+            returnStatus = ssp_engage();
+            if(ANSC_STATUS_SUCCESS != returnStatus)
+              return -1;
 
             break;
 
@@ -113,7 +176,9 @@ int  cmd_dispatch(int  command)
 
         case    'c':
                 
-                ssp_cancel();
+               returnStatus = ssp_cancel();
+               if(ANSC_STATUS_SUCCESS != returnStatus)
+                  return -1;
 
                 break;
 
@@ -135,7 +200,18 @@ int msgBusInit(const char *name)
     extern ANSC_HANDLE bus_handle;
     char *subSys            = NULL;  
     DmErr_t    err;
-    AnscCopyString(g_Subsystem, "eRT.");
+    ANSC_STATUS  returnStatus = ANSC_STATUS_SUCCESS;
+    int                retc = -1;
+    errno_t           rc = -1;
+	
+    rc = strcpy_s(g_Subsystem, sizeof(g_Subsystem), "eRT.");
+    if(rc != EOK)
+    {
+      ERR_CHK(rc);
+      CcspTraceError(("exit ERROR %s:%d\n", __FUNCTION__, __LINE__));
+      exit(1);
+    }
+
     pComponentName = name;
     if ( bRunAsDaemon ) 
         daemonize();
@@ -144,7 +220,12 @@ int msgBusInit(const char *name)
     breakpad_ExceptionHandler();
 #endif /* * INCLUDE_BREAKPAD */
 
-    cmd_dispatch('e');
+    retc = cmd_dispatch('e');
+    if(retc != 0)
+    {
+      CcspTraceError(("exit ERROR %s:%d\n", __FUNCTION__, __LINE__));
+      exit(1);
+    }
 
     subSys = NULL;      /* use default sub-system */
 
@@ -183,7 +264,12 @@ int msgBusInit(const char *name)
         {
             cmdChar = getchar();
 
-            cmd_dispatch(cmdChar);
+           retc = cmd_dispatch(cmdChar);
+           if(retc != 0)
+           {
+             CcspTraceError(("exit ERROR %s:%d\n", __FUNCTION__, __LINE__));
+             exit(1);
+           }
         }
     }
 #endif
@@ -194,7 +280,14 @@ int msgBusInit(const char *name)
     exit(1);
     }
 
-    ssp_cancel();
+    returnStatus = ssp_cancel();
+    if(ANSC_STATUS_SUCCESS != returnStatus)
+    {
+       CcspTraceError(("exit ERROR %s:%d\n", __FUNCTION__, __LINE__));
+       exit(1);
+    }
+
+	
     return 0; //Success
 }
 
@@ -203,43 +296,63 @@ void HarvesterLog(char *msg)
     char LogMsg_arr[4096] = {0};
     char *LogMsg = LogMsg_arr;
     char LogLevel[4096] = {0};
+    char *tok = NULL;
+    size_t len = 0;
+    errno_t rc = -1;
+    enum har_log_level_type_e type;
+
+    if(msg[0] == '\0')
+      return;
+  
     /* Coverity Fix CID: 135571 STRING_OVERFLOW */
     if(strlen(msg) < LOG_LEVEL_MAX)
     {
-      strcpy (LogLevel, msg);
+      rc = strcpy_s(LogLevel, sizeof(LogLevel), msg);
+      if(rc != EOK)
+      {
+        ERR_CHK(rc);
+        return;
+      }
     }
 
-   
-    strtok_r (LogLevel, ",",&LogMsg);
+    len = strlen(LogLevel);
+    tok = strtok_s (LogLevel, &len, ",", &LogMsg);
 
-    if( strcmp(LogLevel, "RDK_LOG_ERROR") == 0)   
+    if (LogMsg[0] != '\0')
     {
-        CcspTraceError((LogMsg));
-    }
-    else if( strcmp(LogLevel, "RDK_LOG_WARN") == 0)
-    {
-        CcspTraceWarning((LogMsg));
-    }
-    else if( strcmp(LogLevel, "RDK_LOG_NOTICE") == 0)
-    {
-        CcspTraceNotice((LogMsg));
-    }
-    else if( strcmp(LogLevel, "RDK_LOG_INFO") == 0)
-    {
+      if (harvester_loglevel_type_from_name(LogLevel, &type))
+      {
+        if(type == LOGERROR)
+        {
+          CcspTraceError((LogMsg));
+        }
+        else if(type == LOGWARN)
+        {
+          CcspTraceWarning((LogMsg));
+        }
+        else if(type == LOGNOTICE)
+        {
+          CcspTraceNotice((LogMsg));
+        }
+        else if(type == LOGINFO)
+        {
+          CcspTraceInfo((LogMsg));
+        }
+        else if(type == LOGDEBUG )
+        {
+          CcspTraceDebug((LogMsg));
+        }
+        else if(type == LOGFATAL )
+        {
+          CcspTraceCritical((LogMsg));
+        }
+      }
+      else
+      {
         CcspTraceInfo((LogMsg));
+      }
     }
-    else if( strcmp(LogLevel, "RDK_LOG_DEBUG") == 0)
-    {
-        CcspTraceDebug((LogMsg));
-    }
-    else if( strcmp(LogLevel, "RDK_LOG_FATAL") == 0)
-    {
-        CcspTraceCritical((LogMsg));
-    }
-    else
-    {
-        CcspTraceInfo((LogMsg));
-    }
+	
 }
 
 /*----------------------------------------------------------------------------*/

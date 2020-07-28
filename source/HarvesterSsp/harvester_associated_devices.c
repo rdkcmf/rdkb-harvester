@@ -34,6 +34,8 @@
 #include "harvester_avro.h"
 #include "ccsp_harvesterLog_wrapper.h"
 #include "report_common.h"
+#include "safec_lib_common.h"
+
 
 #define PUBLIC  0
 #define PRIVATE 1
@@ -106,12 +108,9 @@ ulong GetCurrentTimeInSecond()
 
 static void WaitForPthreadConditionTimeoutIDW()
 {
-    struct timespec _ts;
-    struct timespec _now;
+    struct timespec _ts = { 0 };
+    struct timespec _now = { 0 };
     int n;
-
-    memset(&_ts, 0, sizeof(struct timespec));
-    memset(&_now, 0, sizeof(struct timespec));
 
     pthread_mutex_lock(&idwMutex);
 
@@ -350,6 +349,7 @@ int getTimeOffsetFromUtc()
 {
     static int tm_offset = 0;
     static bool offset_available = false;
+    errno_t                         rc       = -1;
 
     if(offset_available)
     {
@@ -361,7 +361,13 @@ int getTimeOffsetFromUtc()
         char timezonecmd[128] = {0};
         char timezonearr[32] = {0};
         int ret  = 0;
-        sprintf(timezonecmd, "dmcli eRT getv Device.Time.TimeOffset | grep value | awk '{print $5}'");
+
+        rc = sprintf_s(timezonecmd,sizeof(timezonecmd), "dmcli eRT getv Device.Time.TimeOffset | grep value | awk '{print $5}'");
+        if(rc < EOK)
+        {
+          ERR_CHK(rc);
+          return -1;
+        }
         ret = _syscmd(timezonecmd, timezonearr, sizeof(timezonearr));
         if(ret)
         {
@@ -386,10 +392,11 @@ int getTimeOffsetFromUtc()
 
 void add_to_list(struct associateddevicedata **headnode, char* ssid, ULONG devices, wifi_associated_dev_t* devicedata, char* freqband, ULONG channel, char* intfcmacid)
 {
+    errno_t rc = -1;
     CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s ENTER\n", __FUNCTION__ ));
 
     CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, SSID Input[%s] Devices[%ld] \n", ssid, devices));
-    struct associateddevicedata *ptr = malloc(sizeof(*ptr));
+    struct associateddevicedata *ptr = malloc(sizeof(struct associateddevicedata));
     if (ptr == NULL)
     {
         CcspHarvesterTrace(("RDK_LOG_ERROR, Harvester %s :  Linked List Allocation Failed \n", __FUNCTION__ ));
@@ -398,7 +405,8 @@ void add_to_list(struct associateddevicedata **headnode, char* ssid, ULONG devic
     else
     {
         /* Coverity Fix CID: 60030 NULL_RETURNS */
-        memset( ptr, 0, sizeof(*ptr));
+        rc = memset_s(ptr, sizeof(struct associateddevicedata), 0, sizeof(struct associateddevicedata));
+        ERR_CHK(rc);
         ptr->sSidName = strdup(ssid);
         ptr->bssid = strdup(intfcmacid);
         ptr->numAssocDevices = devices;

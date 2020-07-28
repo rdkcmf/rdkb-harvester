@@ -30,12 +30,16 @@
 #include "harvester.h"
 #include "harvester_avro.h"
 #include "ccsp_harvesterLog_wrapper.h"
+#include "safec_lib_common.h"
+
 
 
 #define MAGIC_NUMBER      0x85
 #define MAGIC_NUMBER_SIZE 1
 #define SCHEMA_ID_LENGTH  32
 #define WRITER_BUF_SIZE  (1024 * 30) // 30K
+
+#define NUM_OF_RADIO_OPERATING_CHANNEL_BANDWIDTHS (sizeof(radio_operating_channel_bandwidth_table)/sizeof(radio_operating_channel_bandwidth_table[0]))
 
 // HASH - 9f4adeb1b38d97025d723221be1cbdcf
 // UUID - 4d1f3d40-ab59-4672-89e6-c8cfdca739a0
@@ -75,6 +79,53 @@ BOOL rt_schema_file_parsed = FALSE;
 static size_t AvroRTSerializedSize;
 static size_t OneAvroRTSerializedSize;
 char AvroRTSerializedBuf[WRITER_BUF_SIZE];
+
+
+enum channel_bandwidth_e {
+    MHZ20,
+    MHZ40,
+    MHZ80,
+    MHZ80_80,
+    MHZ160,
+};
+
+typedef struct {
+  char     *name;
+  enum channel_bandwidth_e  type;
+} RADIO_OPERATING_CHANNEL_BANDWIDTH;
+
+RADIO_OPERATING_CHANNEL_BANDWIDTH radio_operating_channel_bandwidth_table[] = {
+    { "20MHz",MHZ20 },
+    { "40MHz",MHZ40 },
+    { "80MHz", MHZ80 },
+    { "80_80MHz",MHZ80_80 },
+    { "160MHz",	MHZ160 }
+};
+
+int get_radiOperatingChannelBandwidth_from_name(char *name, enum channel_bandwidth_e *type_ptr)
+{
+  int rc = -1;
+  int ind = -1;
+  int i = 0;
+  size_t strsize = 0;
+  if((name == NULL) || (type_ptr == NULL))
+     return 0;
+
+  strsize = strlen(name);
+
+  for (i = 0 ; i < NUM_OF_RADIO_OPERATING_CHANNEL_BANDWIDTHS ; ++i)
+  {
+      rc = strcmp_s(name, strsize, radio_operating_channel_bandwidth_table[i].name, &ind);
+      ERR_CHK(rc);
+      if((rc == EOK) && (!ind))
+      {
+          *type_ptr = radio_operating_channel_bandwidth_table[i].type;
+          return 1;
+      }
+  }
+  return 0;
+}
+
 
 char* GetRISSchemaBuffer()
 {
@@ -118,8 +169,9 @@ int NumberofRTElementsinLinkedList(struct radiotrafficdata* head)
 
 avro_writer_t prepare_rt_writer()
 {
-  avro_writer_t writer = 0;
+  avro_writer_t writer ={0};
   long lsSize = 0;
+  errno_t rc = -1;
 
   CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s : ENTER \n", __FUNCTION__ ));
 
@@ -182,11 +234,22 @@ avro_writer_t prepare_rt_writer()
   else
     CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Stored lsSize = %ld, pRT_schema_buffer = 0x%lx.\n", lsSize + 1, (ulong)rt_schema_buffer ));
 
-  memset(&AvroRTSerializedBuf[0], 0, sizeof(AvroRTSerializedBuf));
+  rc = memset_s(&AvroRTSerializedBuf[0], sizeof(AvroRTSerializedBuf), 0, sizeof(AvroRTSerializedBuf));
+  ERR_CHK(rc);
 
   AvroRTSerializedBuf[0] = MAGIC_NUMBER; /* fill MAGIC number */
-  memcpy( &AvroRTSerializedBuf[ MAGIC_NUMBER_SIZE ], RT_UUID, sizeof(RT_UUID));
-  memcpy( &AvroRTSerializedBuf[ MAGIC_NUMBER_SIZE + sizeof(RT_UUID) ], RT_HASH, sizeof(RT_HASH));
+  rc = memcpy_s(&AvroRTSerializedBuf[ MAGIC_NUMBER_SIZE ], sizeof(AvroRTSerializedBuf)-MAGIC_NUMBER_SIZE, RT_UUID, sizeof(RT_UUID));
+  if(rc != EOK)
+  {
+    ERR_CHK(rc);
+    return writer;
+  }
+  rc = memcpy_s(&AvroRTSerializedBuf[ MAGIC_NUMBER_SIZE + sizeof(RT_UUID) ], sizeof(AvroRTSerializedBuf)-MAGIC_NUMBER_SIZE-sizeof(RT_UUID), RT_HASH, sizeof(RT_HASH));
+  if(rc != EOK)
+  {
+    ERR_CHK(rc);
+    return writer;
+  }
   writer = avro_writer_memory( (char*)&AvroRTSerializedBuf[MAGIC_NUMBER_SIZE + SCHEMA_ID_LENGTH],
                                sizeof(AvroRTSerializedBuf) - MAGIC_NUMBER_SIZE - SCHEMA_ID_LENGTH );
 
@@ -211,6 +274,11 @@ void harvester_report_radiotraffic(struct radiotrafficdata *head)
   char * contentType = "avro/binary"; // contentType "application/json", "avro/binary"
   uuid_t transaction_id;
   char trans_id[37];
+  size_t strsize2_4GHZ = 0;
+  size_t strsize5GHZ = 0;
+  int rc = -1;
+  int ind = -1;
+  enum channel_bandwidth_e  type;
 
   CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s : ENTER \n", __FUNCTION__ ));
 
@@ -293,7 +361,12 @@ void harvester_report_radiotraffic(struct radiotrafficdata *head)
   {
     macStr = getDeviceMac();
 
-    strncpy( CpemacStr, macStr, sizeof(CpemacStr));
+    rc = strcpy_s(CpemacStr,sizeof(CpemacStr),macStr);
+    if(rc != EOK)
+    {
+       ERR_CHK(rc);
+       return;
+    }
     CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Received DeviceMac from Atom side: %s\n",macStr));
   }
 
@@ -390,6 +463,9 @@ void harvester_report_radiotraffic(struct radiotrafficdata *head)
 
   //Current Device Report Field
   avro_value_t drField= {0}; /*RDKB-7466, CID-33408, init before use */
+  
+  strsize2_4GHZ = strlen("2.4GHz");
+  strsize5GHZ = strlen("5GHz");
 
     while(ptr != NULL)
     {
@@ -469,22 +545,29 @@ void harvester_report_radiotraffic(struct radiotrafficdata *head)
       avro_value_set_branch(&drField, 1, &optional);
       CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, frequency_band\tType: %d\n", avro_value_get_type(&optional)));
       //Patch HAL values if necessary
-      if ( strcmp( ptr->radioOperatingFrequencyBand, "2.4GHz" ) == 0 )
+      rc = strcmp_s("2.4GHz", strsize2_4GHZ, ptr->radioOperatingFrequencyBand, &ind);
+      ERR_CHK(rc);
+      if((rc == EOK) && (!ind))
       {
-          CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, frequency_band = \"%s\"\n", "2.4GHz, set to _2_4GHz" ));
-          avro_value_set_enum(&optional, avro_schema_enum_get_by_name(avro_value_get_schema(&optional), "_2_4GHz" ));
-      }
-      else
-      if ( strcmp( ptr->radioOperatingFrequencyBand, "5GHz" ) == 0 )
-      {
-          CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, frequency_band = \"%s\"\n", "5GHz, set to _5GHz" ));
-          avro_value_set_enum(&optional, avro_schema_enum_get_by_name(avro_value_get_schema(&optional), "_5GHz" ));
+         CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, frequency_band = \"%s\"\n", "2.4GHz, set to _2_4GHz" ));
+         avro_value_set_enum(&optional, avro_schema_enum_get_by_name(avro_value_get_schema(&optional), "_2_4GHz" ));
       }
       else
       {
-          CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, frequency_band = \"%s\"\n", ptr->radioOperatingFrequencyBand ));
-          avro_value_set_enum(&optional, avro_schema_enum_get_by_name(avro_value_get_schema(&optional), ptr->radioOperatingFrequencyBand));
+         rc = strcmp_s("5GHz", strsize5GHZ, ptr->radioOperatingFrequencyBand, &ind);
+         ERR_CHK(rc);
+         if((rc == EOK) && (!ind))
+         {
+            CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, frequency_band = \"%s\"\n", "5GHz, set to _5GHz" ));
+            avro_value_set_enum(&optional, avro_schema_enum_get_by_name(avro_value_get_schema(&optional), "_5GHz" ));
+         }
+         else
+         {
+            CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, frequency_band = \"%s\"\n", ptr->radioOperatingFrequencyBand ));
+            avro_value_set_enum(&optional, avro_schema_enum_get_by_name(avro_value_get_schema(&optional), ptr->radioOperatingFrequencyBand));
+         }
       }
+
       if ( CHK_AVRO_ERR ) CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, %s\n", avro_strerror()));
 
       // operating channel bandwidth
@@ -494,37 +577,37 @@ void harvester_report_radiotraffic(struct radiotrafficdata *head)
       if ( CHK_AVRO_ERR ) CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, %s\n", avro_strerror()));
       CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, operating_channel_bandwidth\tType: %d\n", avro_value_get_type(&optional)));
       //Patch
-      if ( strcmp( ptr->radiOperatingChannelBandwidth, "20MHz" ) == 0 )
+      if(get_radiOperatingChannelBandwidth_from_name(ptr->radiOperatingChannelBandwidth, &type))
       {
-          CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, operating_channel_bandwidth = \"%s\"\n", "20MHz, set to _20MHz" ));
-          avro_value_set_enum(&optional, avro_schema_enum_get_by_name(avro_value_get_schema(&optional), "_20MHz"));
+         if(type == MHZ20)
+         {
+            CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, operating_channel_bandwidth = \"%s\"\n", "20MHz, set to _20MHz" ));
+            avro_value_set_enum(&optional, avro_schema_enum_get_by_name(avro_value_get_schema(&optional), "_20MHz"));	 
+         }
+         else if(type == MHZ40)
+         {
+            CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, operating_channel_bandwidth = \"%s\"\n", "40MHz, set to _40MHz" )); 		 avro_value_set_enum(&optional, avro_schema_enum_get_by_name(avro_value_get_schema(&optional), "_40MHz"));
+         }
+         else if(type == MHZ80)
+         {
+            CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, operating_channel_bandwidth = \"%s\"\n", "80MHz, set to _80MHz" )); 		 avro_value_set_enum(&optional, avro_schema_enum_get_by_name(avro_value_get_schema(&optional), "_80MHz"));
+         }
+         else if(type == MHZ80_80)
+         {
+            CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, operating_channel_bandwidth = \"%s\"\n", "80_80MHz, set to _80_80MHz" ));
+            avro_value_set_enum(&optional, avro_schema_enum_get_by_name(avro_value_get_schema(&optional), "_80_80MHz"));
+         }
+         else if(type == MHZ160)
+         {
+            CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, operating_channel_bandwidth = \"%s\"\n", "160MHz, set to _160MHz" ));
+            avro_value_set_enum(&optional, avro_schema_enum_get_by_name(avro_value_get_schema(&optional), "_160MHz"));
+         }
       }
       else
-      if ( strcmp( ptr->radiOperatingChannelBandwidth, "40MHz" ) == 0 )
       {
-          CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, operating_channel_bandwidth = \"%s\"\n", "40MHz, set to _40MHz" ));          avro_value_set_enum(&optional, avro_schema_enum_get_by_name(avro_value_get_schema(&optional), "_40MHz"));
+         CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, operating_channel_bandwidth = %s\n", ptr->radiOperatingChannelBandwidth ));			avro_value_set_enum(&optional, avro_schema_enum_get_by_name(avro_value_get_schema(&optional), ptr->radiOperatingChannelBandwidth));
       }
-      else
-      if ( strcmp( ptr->radiOperatingChannelBandwidth, "80MHz" ) == 0 )
-      {
-          CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, operating_channel_bandwidth = \"%s\"\n", "80MHz, set to _80MHz" ));          avro_value_set_enum(&optional, avro_schema_enum_get_by_name(avro_value_get_schema(&optional), "_80MHz"));
-      }
-      else
-      if ( strcmp( ptr->radiOperatingChannelBandwidth, "80_80MHz" ) == 0 )
-      {
-          CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, operating_channel_bandwidth = \"%s\"\n", "80_80MHz, set to _80_80MHz" ));
-          avro_value_set_enum(&optional, avro_schema_enum_get_by_name(avro_value_get_schema(&optional), "_80_80MHz"));
-      }
-      else
-      if ( strcmp( ptr->radiOperatingChannelBandwidth, "160MHz" ) == 0 )
-      {
-          CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, operating_channel_bandwidth = \"%s\"\n", "160MHz, set to _160MHz" ));
-          avro_value_set_enum(&optional, avro_schema_enum_get_by_name(avro_value_get_schema(&optional), "_160MHz"));
-      }
-      else
-      {
-          CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, operating_channel_bandwidth = %s\n", ptr->radiOperatingChannelBandwidth ));          avro_value_set_enum(&optional, avro_schema_enum_get_by_name(avro_value_get_schema(&optional), ptr->radiOperatingChannelBandwidth));
-      }
+
       if ( CHK_AVRO_ERR ) CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, %s\n", avro_strerror()));
 
       //radio_noise_floor
@@ -645,7 +728,13 @@ void harvester_report_radiotraffic(struct radiotrafficdata *head)
       char buf[30];
       if ( ( k % 32 ) == 0 )
         fprintf( stderr, "\n");
-      sprintf(buf, "%02X", (unsigned char)AvroRTSerializedBuf[k]);
+      rc = sprintf_s(buf,sizeof(buf),"%02X", (unsigned char)AvroRTSerializedBuf[k]);
+      if(rc < EOK)
+      {
+        ERR_CHK(rc);
+        free(b64buffer);
+        return;
+      }
       fprintf( stderr, "%c%c", buf[0], buf[1] );
     }
 

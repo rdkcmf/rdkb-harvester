@@ -29,6 +29,8 @@
 #include "harvester.h"
 #include "harvester_avro.h"
 #include "ccsp_harvesterLog_wrapper.h"
+#include "safec_lib_common.h"
+
 
 #define MAGIC_NUMBER      0x85
 #define MAGIC_NUMBER_SIZE 1
@@ -127,8 +129,10 @@ ULONG NumberofDevicesinLinkedList(struct associateddevicedata* head)
 
 avro_writer_t prepare_writer()
 {
-  avro_writer_t writer;
+  avro_writer_t writer = {0};
   long lSize = 0;
+  errno_t rc = -1;
+
   CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s : ENTER \n", __FUNCTION__ ));
   CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Avro prepares to serialize data\n"));
 
@@ -184,13 +188,23 @@ avro_writer_t prepare_writer()
     CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Stored lSize = %ld, pbuffer = 0x%lx.\n", lSize + 1, (ulong)buffer ));
   }
 
-  memset(&AvroSerializedBuf[0], 0, sizeof(AvroSerializedBuf));
+  rc = memset_s(&AvroSerializedBuf[0], sizeof(AvroSerializedBuf), 0, sizeof(AvroSerializedBuf));
+  ERR_CHK(rc);
 
   AvroSerializedBuf[0] = MAGIC_NUMBER; /* fill MAGIC number = Empty, i.e. no Schema ID */
 
-  memcpy( &AvroSerializedBuf[ MAGIC_NUMBER_SIZE ], UUID, sizeof(UUID));
-
-  memcpy( &AvroSerializedBuf[ MAGIC_NUMBER_SIZE + sizeof(UUID) ], HASH, sizeof(HASH));
+  rc = memcpy_s(&AvroSerializedBuf[ MAGIC_NUMBER_SIZE ], sizeof(AvroSerializedBuf)-MAGIC_NUMBER_SIZE, UUID, sizeof(UUID));
+  if(rc != EOK)
+  {
+    ERR_CHK(rc);
+    return writer;
+  }
+  rc = memcpy_s(&AvroSerializedBuf[ MAGIC_NUMBER_SIZE + sizeof(UUID) ], sizeof(AvroSerializedBuf)-MAGIC_NUMBER_SIZE-sizeof(UUID), HASH, sizeof(HASH));
+  if(rc != EOK)
+  {
+    ERR_CHK(rc);
+    return writer;
+  }
 
   writer = avro_writer_memory( (char*)&AvroSerializedBuf[MAGIC_NUMBER_SIZE + SCHEMA_ID_LENGTH],
                                sizeof(AvroSerializedBuf) - MAGIC_NUMBER_SIZE - SCHEMA_ID_LENGTH );
@@ -217,6 +231,10 @@ void harvester_report_associateddevices(struct associateddevicedata *head, char*
   char * contentType = "avro/binary"; // contentType "application/json", "avro/binary"
   uuid_t transaction_id;
   char trans_id[37];
+  errno_t rc = -1;
+  int ind = -1;
+  size_t strsize2_4GHZ = 0;
+  size_t strsize5GHZ = 0;
 
   CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s : ENTER \n", __FUNCTION__ ));
 
@@ -303,7 +321,12 @@ void harvester_report_associateddevices(struct associateddevicedata *head, char*
   {
     macStr = getDeviceMac();
 
-    strncpy( CpemacStr, macStr, sizeof(CpemacStr));
+    rc = strcpy_s(CpemacStr,sizeof(CpemacStr),macStr);
+    if(rc != EOK)
+    {
+       ERR_CHK(rc);
+       return;
+    }
     CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Received DeviceMac from Atom side: %s\n",macStr));
   }
 
@@ -404,6 +427,9 @@ void harvester_report_associateddevices(struct associateddevicedata *head, char*
   //interference sources
   avro_value_t interferenceSource = {0}; /*RDKB-7463, CID-33062, init before use */
 
+  strsize2_4GHZ = strlen("2.4GHz");
+  strsize5GHZ = strlen("5GHz");
+
   for (i = 0; i < numElements; i++)
   {
     for (j = 0, ps = ptr->devicedata; j < ptr->numAssocDevices; j++, ps++)
@@ -463,8 +489,10 @@ void harvester_report_associateddevices(struct associateddevicedata *head, char*
       avro_value_set_enum(&drField, avro_schema_enum_get_by_name(avro_value_get_schema(&drField), ServiceType));
       if ( CHK_AVRO_ERR ) CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, %s\n", avro_strerror()));
 
-      memset(CpeMacHoldingBuf, 0, sizeof CpeMacHoldingBuf);
-      memset(CpeMacid, 0, sizeof CpeMacid);
+      rc = memset_s(CpeMacHoldingBuf, sizeof(CpeMacHoldingBuf), 0, sizeof(CpeMacHoldingBuf));
+      ERR_CHK(rc);
+      rc = memset_s(CpeMacid, sizeof(CpeMacid), 0, sizeof(CpeMacid));
+      ERR_CHK(rc);
 
       CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Mac address BSSID  = %s \n", ptr->bssid ));
 
@@ -556,22 +584,29 @@ void harvester_report_associateddevices(struct associateddevicedata *head, char*
       avro_value_set_branch(&drField, 1, &optional);
       CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, frequency_band\tType: %d\n", avro_value_get_type(&optional)));
       //Patch HAL values if necessary
-      if ( strcmp( ptr->radioOperatingFrequencyBand, "2.4GHz" ) == 0 )
+      rc = strcmp_s("2.4GHz", strsize2_4GHZ, ptr->radioOperatingFrequencyBand, &ind);
+      ERR_CHK(rc);
+      if((rc == EOK) && (!ind))
       {
-          CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, frequency_band = \"%s\"\n", "2.4GHz, set to _2_4GHz" ));
-          avro_value_set_enum(&optional, avro_schema_enum_get_by_name(avro_value_get_schema(&optional), "_2_4GHz" ));
-      }
-      else
-      if ( strcmp( ptr->radioOperatingFrequencyBand, "5GHz" ) == 0 )
-      {
-          CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, frequency_band = \"%s\"\n", "5GHz, set to _5GHz" ));
-          avro_value_set_enum(&optional, avro_schema_enum_get_by_name(avro_value_get_schema(&optional), "_5GHz" ));
+         CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, frequency_band = \"%s\"\n", "2.4GHz, set to _2_4GHz" ));
+         avro_value_set_enum(&optional, avro_schema_enum_get_by_name(avro_value_get_schema(&optional), "_2_4GHz" ));
       }
       else
       {
-          CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, frequency_band = \"%s\"\n", ptr->radioOperatingFrequencyBand ));
-          avro_value_set_enum(&optional, avro_schema_enum_get_by_name(avro_value_get_schema(&optional), ptr->radioOperatingFrequencyBand));
+         rc = strcmp_s("5GHz", strsize5GHZ, ptr->radioOperatingFrequencyBand, &ind);
+         ERR_CHK(rc);
+         if((rc == EOK) && (!ind))
+         {
+            CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, frequency_band = \"%s\"\n", "5GHz, set to _5GHz" ));
+            avro_value_set_enum(&optional, avro_schema_enum_get_by_name(avro_value_get_schema(&optional), "_5GHz" ));
+         }
+         else
+         {
+            CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, frequency_band = \"%s\"\n", ptr->radioOperatingFrequencyBand ));
+            avro_value_set_enum(&optional, avro_schema_enum_get_by_name(avro_value_get_schema(&optional), ptr->radioOperatingFrequencyBand));
+         }
       }
+	  
       if ( CHK_AVRO_ERR ) CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, %s\n", avro_strerror()));
 
       // channel #
@@ -813,7 +848,13 @@ void harvester_report_associateddevices(struct associateddevicedata *head, char*
       char buf[30];
       if ( ( k % 32 ) == 0 )
         fprintf( stderr, "\n");
-      sprintf(buf, "%02X", (unsigned char)AvroSerializedBuf[k]);
+      rc = sprintf_s(buf,sizeof(buf),"%02X", (unsigned char)AvroSerializedBuf[k]);
+      if(rc < EOK)
+      {
+        ERR_CHK(rc);
+        free(b64buffer);
+        return;
+      }
       fprintf( stderr, "%c%c", buf[0], buf[1] );
     }
 

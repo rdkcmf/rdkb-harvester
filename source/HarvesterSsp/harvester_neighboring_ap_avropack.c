@@ -29,6 +29,8 @@
 #include "harvester.h"
 #include "harvester_avro.h"
 #include "ccsp_harvesterLog_wrapper.h"
+#include "safec_lib_common.h"
+
 
 #define MAGIC_NUMBER      0x85
 #define MAGIC_NUMBER_SIZE 1
@@ -129,8 +131,9 @@ ULONG NumberofNAPDevicesinLinkedList(struct neighboringapdata* head)
 
 avro_writer_t prepare_nap_writer()
 {
-  avro_writer_t writer = 0;
+  avro_writer_t writer ={0};
   long lsSize = 0;
+  errno_t rc = -1;
 
   CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s : ENTER \n", __FUNCTION__ ));
 
@@ -192,11 +195,22 @@ avro_writer_t prepare_nap_writer()
   else
     CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Stored lsSize = %ld, pnap_schema_buffer = 0x%lx.\n", lsSize + 1, (ulong)nap_schema_buffer ));
 
-  memset(&AvroNAPSerializedBuf[0], 0, sizeof(AvroNAPSerializedBuf));
+  rc = memset_s(&AvroNAPSerializedBuf[0], sizeof(AvroNAPSerializedBuf), 0, sizeof(AvroNAPSerializedBuf));
+  ERR_CHK(rc);
 
   AvroNAPSerializedBuf[0] = MAGIC_NUMBER; /* fill MAGIC number */
-  memcpy( &AvroNAPSerializedBuf[ MAGIC_NUMBER_SIZE ], NAP_UUID, sizeof(NAP_UUID));
-  memcpy( &AvroNAPSerializedBuf[ MAGIC_NUMBER_SIZE + sizeof(NAP_UUID) ], NAP_HASH, sizeof(NAP_HASH));
+  rc = memcpy_s(&AvroNAPSerializedBuf[ MAGIC_NUMBER_SIZE ], sizeof(AvroNAPSerializedBuf)-MAGIC_NUMBER_SIZE, NAP_UUID, sizeof(NAP_UUID));
+  if(rc != EOK)
+  {
+    ERR_CHK(rc);
+    return writer;
+  }
+  rc = memcpy_s(&AvroNAPSerializedBuf[ MAGIC_NUMBER_SIZE + sizeof(NAP_UUID) ], sizeof(AvroNAPSerializedBuf)-MAGIC_NUMBER_SIZE-sizeof(NAP_UUID), NAP_HASH, sizeof(NAP_HASH));
+  if(rc != EOK)
+  {
+    ERR_CHK(rc);
+    return writer;
+  }
   writer = avro_writer_memory( (char*)&AvroNAPSerializedBuf[MAGIC_NUMBER_SIZE + SCHEMA_ID_LENGTH],
                                sizeof(AvroNAPSerializedBuf) - MAGIC_NUMBER_SIZE - SCHEMA_ID_LENGTH );
 
@@ -223,6 +237,7 @@ void harvester_report_neighboringap(struct neighboringapdata *head)
   uuid_t transaction_id;
   char trans_id[37] = {0};
   char * contentType = "avro/binary"; // contentType "application/json", "avro/binary"
+  errno_t rc = -1;
 
   CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s : ENTER \n", __FUNCTION__ ));
 
@@ -256,7 +271,13 @@ void harvester_report_neighboringap(struct neighboringapdata *head)
   if ( macStr == NULL )
   {
     macStr = getDeviceMac();
-    strncpy( CpemacStr, macStr, sizeof(CpemacStr));
+    rc = strcpy_s(CpemacStr,sizeof(CpemacStr),macStr);
+    if(rc != EOK)
+    {
+       ERR_CHK(rc);
+       pthread_mutex_unlock(&avropack_mutex);
+       return;
+    }
     CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Received DeviceMac from Atom side: %s\n",macStr));
   }
 
@@ -407,7 +428,13 @@ void harvester_report_neighboringap(struct neighboringapdata *head)
       if ( CHK_AVRO_ERR ) CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, %s\n", avro_strerror()));
 
       //operating_channel_bandwidth
-      strncpy( ps->ap_OperatingChannelBandwidth, "_20MHz", sizeof("_20MHz"));
+      rc = strcpy_s(ps->ap_OperatingChannelBandwidth,sizeof(ps->ap_OperatingChannelBandwidth),"_20MHz");
+      if(rc != EOK)
+      {
+          ERR_CHK(rc);
+          pthread_mutex_unlock(&avropack_mutex);
+          return;
+      }
       avro_value_get_by_name(&dr, "operating_channel_bandwidth", &drField, NULL);
       avro_value_set_branch(&drField, 1, &optional);
       avro_value_set_enum(&optional,avro_schema_enum_get_by_name(avro_value_get_schema(&optional), ps->ap_OperatingChannelBandwidth));
@@ -495,7 +522,14 @@ void harvester_report_neighboringap(struct neighboringapdata *head)
       char buf[30];
       if ( ( k % 32 ) == 0 )
         fprintf( stderr, "\n");
-      sprintf(buf, "%02X", (unsigned char)AvroNAPSerializedBuf[k]);
+      rc = sprintf_s(buf,sizeof(buf),"%02X", (unsigned char)AvroNAPSerializedBuf[k]);
+      if(rc < EOK)
+      {
+        ERR_CHK(rc);
+        free(b64buffer);
+        pthread_mutex_unlock(&avropack_mutex);
+        return;
+      }
       fprintf( stderr, "%c%c", buf[0], buf[1] );
     }
 
@@ -529,7 +563,6 @@ void harvester_report_neighboringap(struct neighboringapdata *head)
   CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s : EXIT \n", __FUNCTION__ ));
 
   pthread_mutex_unlock(&avropack_mutex);
-
 }
 
 

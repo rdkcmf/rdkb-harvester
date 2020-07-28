@@ -27,6 +27,8 @@
 #include "dslh_dmagnt_interface.h"
 #include "ccsp_trace.h"
 #include "dm_pack_create_func.h"
+#include "safec_lib_common.h"
+
 
 /*----------------------------------------------------------------------------*/
 /*                                   Macros                                   */
@@ -63,6 +65,7 @@ extern  ULONG                   g_ulAllocatedSizePeak;
  */
 ANSC_STATUS ssp_create()
 {
+     errno_t rc = -1;
     /* Create component common data model object */
 
      g_pComponent_COMMON = (PCOMPONENT_COMMON)AnscAllocateMemory(sizeof(COMPONENT_COMMON));
@@ -89,7 +92,12 @@ ANSC_STATUS ssp_create()
         }
         else
         {
-            AnscCopyString(pSsdCcdIf->Name, CCSP_CCD_INTERFACE_NAME);
+            rc = strcpy_s(pSsdCcdIf->Name, sizeof(pSsdCcdIf->Name), CCSP_CCD_INTERFACE_NAME);
+            if(rc != EOK)
+            {
+              ERR_CHK(rc);
+              return ANSC_STATUS_FAILURE;
+            }
 
             pSsdCcdIf->InterfaceId              = CCSP_CCD_INTERFACE_ID;
             pSsdCcdIf->hOwnerContext            = NULL;
@@ -122,7 +130,12 @@ ANSC_STATUS ssp_create()
         }
         else
         {
-            AnscCopyString(pDslhLcbIf->Name, CCSP_LIBCBK_INTERFACE_NAME);
+            rc = strcpy_s(pDslhLcbIf->Name, sizeof(pDslhLcbIf->Name),CCSP_LIBCBK_INTERFACE_NAME);
+            if(rc != EOK)
+            {
+              ERR_CHK(rc);
+              return ANSC_STATUS_FAILURE;
+            }
 
             pDslhLcbIf->InterfaceId              = CCSP_LIBCBK_INTERFACE_ID;
             pDslhLcbIf->hOwnerContext            = NULL;
@@ -151,6 +164,7 @@ ANSC_STATUS ssp_engage()
 	ANSC_STATUS					    returnStatus                = ANSC_STATUS_SUCCESS;
     PCCC_MBI_INTERFACE              pSsdMbiIf                   = (PCCC_MBI_INTERFACE)MsgHelper_CreateCcdMbiIf((void*)bus_handle, g_Subsystem);
     char                            CrName[256];
+	errno_t                         rc       = -1;
 
      g_pComponent_COMMON->Health = CCSP_COMMON_COMPONENT_HEALTH_Yellow;
 
@@ -161,13 +175,11 @@ ANSC_STATUS ssp_engage()
     pDslhCpeController->SetDbusHandle((ANSC_HANDLE)pDslhCpeController, (ANSC_HANDLE)bus_handle);
     pDslhCpeController->Engage((ANSC_HANDLE)pDslhCpeController);
 
-    if ( g_Subsystem[0] != 0 )
+    rc = sprintf_s(CrName,sizeof(CrName), "%s%s", g_Subsystem, CCSP_DBUS_INTERFACE_CR);
+    if(rc < EOK)
     {
-        _ansc_sprintf(CrName, "%s%s", g_Subsystem, CCSP_DBUS_INTERFACE_CR);
-    }
-    else
-    {
-        _ansc_sprintf(CrName, "%s", CCSP_DBUS_INTERFACE_CR);
+       ERR_CHK(rc);
+       return ANSC_STATUS_FAILURE;
     }
 
     returnStatus =
@@ -200,22 +212,26 @@ ANSC_STATUS ssp_cancel()
 	int                             nRet  = 0;
     char                            CrName[256];
     char                            CpName[256];
+	errno_t                         rc       = -1;
 
     if(  g_pComponent_COMMON == NULL)
     {
         return ANSC_STATUS_SUCCESS;
     }
 
-    if ( g_Subsystem[0] != 0 )
+    rc = sprintf_s(CrName,sizeof(CrName), "%s%s", g_Subsystem, CCSP_DBUS_INTERFACE_CR);
+    if(rc < EOK)
     {
-        _ansc_sprintf(CrName, "%s%s", g_Subsystem, CCSP_DBUS_INTERFACE_CR);
-        _ansc_sprintf(CpName, "%s%s", g_Subsystem, CCSP_COMPONENT_NAME);
+      ERR_CHK(rc);
+      return ANSC_STATUS_FAILURE;
     }
-    else
+    rc = sprintf_s(CpName,sizeof(CpName), "%s%s", g_Subsystem, CCSP_COMPONENT_NAME);
+    if(rc < EOK)
     {
-        _ansc_sprintf(CrName, "%s", CCSP_DBUS_INTERFACE_CR);
-        _ansc_sprintf(CpName, "%s", CCSP_COMPONENT_NAME);
+      ERR_CHK(rc);
+      return ANSC_STATUS_FAILURE;
     }
+
     /* unregister component */
     nRet = CcspBaseIf_unregisterComponent(bus_handle, CrName, CpName );  
     AnscTrace("unregisterComponent returns %d\n", nRet);

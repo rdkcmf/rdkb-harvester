@@ -171,14 +171,15 @@ avro_writer_t prepare_nap_writer()
 
     fclose(fp);
 
+    /* CID:135280 String not null terminated */
+    nap_schema_buffer[lsSize]= '\0';
+
     //schemas
     avro_schema_error_t  error = NULL;
 
     //Master report/datum
     avro_schema_t neighborAp_device_report_schema = NULL;
     
-    /* Coverity Fix CID: 135280 STRING_NULL*/
-    nap_schema_buffer[strlen(nap_schema_buffer)+1] = '\0';
     avro_schema_from_json(nap_schema_buffer, strlen(nap_schema_buffer),
                         &neighborAp_device_report_schema, &error);
 

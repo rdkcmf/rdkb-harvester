@@ -255,21 +255,26 @@ int GetRadioNeighboringAPOnDemandData(int radioIndex, char* radioIfName)
 
         for(i=0, ds=neighbor_ap_array; i<array_size; i++, ds++) 
         {
-            CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, AP[%d] ap_SSID [%s] \n",i, &(ds->ap_SSID)));
-            CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, AP[%d] ap_BSSID [%s] \n",i, &(ds->ap_BSSID)));
-            CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, AP[%d] ap_Mode [%s] \n",i, &(ds->ap_Mode)));
+            /* CID :63833, 125383, 125383, 125383, 125383, 125383, 125383, 125383, 125383, 125383,
+             * 125383, 71287, 125291, 61682, 68207, 125450, 124772, 53862, 65211, 125249,
+             * 125513, 70030 - Printf arg type mismatch 
+             */
+
+            CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, AP[%d] ap_SSID [%s] \n",i, ds->ap_SSID));
+            CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, AP[%d] ap_BSSID [%s] \n",i, ds->ap_BSSID));
+            CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, AP[%d] ap_Mode [%s] \n",i, ds->ap_Mode));
             CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, AP[%d] ap_Channel %d \n", i, ds->ap_Channel));
             CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, AP[%d] ap_SignalStrength %d \n", i, ds->ap_SignalStrength));
-            CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, AP[%d] ap_SecurityModeEnabled [%s] \n",i, &(ds->ap_SecurityModeEnabled)));
-            CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, AP[%d] ap_EncryptionMode [%s] \n",i, &(ds->ap_EncryptionMode)));
-            CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, AP[%d] ap_OperatingFrequencyBand [%s] \n",i, &(ds->ap_OperatingFrequencyBand)));
-            CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, AP[%d] ap_SupportedStandards [%s] \n",i, &(ds->ap_SupportedStandards)));        
-            CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, AP[%d] ap_OperatingStandards [%s] \n",i, &(ds->ap_OperatingStandards)));
-            CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, AP[%d] ap_OperatingChannelBandwidth [%s] \n",i, &(ds->ap_OperatingChannelBandwidth)));
+            CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, AP[%d] ap_SecurityModeEnabled [%s] \n",i, ds->ap_SecurityModeEnabled));
+            CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, AP[%d] ap_EncryptionMode [%s] \n",i, ds->ap_EncryptionMode));
+            CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, AP[%d] ap_OperatingFrequencyBand [%s] \n",i, ds->ap_OperatingFrequencyBand));
+            CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, AP[%d] ap_SupportedStandards [%s] \n",i, ds->ap_SupportedStandards));        
+            CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, AP[%d] ap_OperatingStandards [%s] \n",i, ds->ap_OperatingStandards));
+            CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, AP[%d] ap_OperatingChannelBandwidth [%s] \n",i, ds->ap_OperatingChannelBandwidth));
             CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, AP[%d] ap_BeaconPeriod %d \n", i, ds->ap_BeaconPeriod));
             CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, AP[%d] ap_Noise %d \n", i, ds->ap_Noise));
-            CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, AP[%d] ap_BasicDataTransferRates [%s] \n",i, &(ds->ap_BasicDataTransferRates))); 
-            CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, AP[%d] ap_SupportedDataTransferRates [%s] \n",i, &(ds->ap_SupportedDataTransferRates)));
+            CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, AP[%d] ap_BasicDataTransferRates [%s] \n",i, ds->ap_BasicDataTransferRates)); 
+            CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, AP[%d] ap_SupportedDataTransferRates [%s] \n",i, ds->ap_SupportedDataTransferRates));
             CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, AP[%d] ap_DTIMPeriod %d \n", i, ds->ap_DTIMPeriod));
             CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, AP[%d] ap_ChannelUtilization %d \n", i, ds->ap_ChannelUtilization));
 

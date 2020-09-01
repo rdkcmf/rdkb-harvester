@@ -231,11 +231,8 @@ static void *handle_parodus()
 		    else
 		    {
 		        CcspHarvesterTrace(("RDK_LOG_ERROR, Init for parodus (url %s) failed: '%s'\n", parodus_url, libparodus_strerror(ret)));
-		        if( NULL == parodus_url )
-		        {
-		            get_parodus_url(&parodus_url);
-		            cfg1.parodus_url = parodus_url;
-		        }
+                        /* CID: 67436 Logically dead code - 
+                           Remove the check  NULL == parodus_url*/
 		        sleep(backoffRetryTime);
 		        c++;
 		    }
@@ -431,14 +428,6 @@ char * getDeviceMac()
                 }
                 CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Calling macToLower to get deviceMacId\n"));
                 AnscMacToLower(deviceMAC, parameterval[0]->parameterValue, sizeof(deviceMAC));
-                if(dstComp)
-                {
-                    AnscFreeMemory(dstComp);
-                }
-                if(dstPath)
-                {
-                    AnscFreeMemory(dstPath);
-                }
         
             }
             else
@@ -447,6 +436,17 @@ char * getDeviceMac()
                 CcspTraceError(("RDK_LOG_ERROR, Failed to get values for %s ret: %d\n",getList,ret));
 	        	sleep(10);
             }
+            /* CID: 54087 & 60662 Resource leak 
+               Dealloc common for both success and failure case*/
+            if(dstComp)
+            {
+               AnscFreeMemory(dstComp);
+            }
+            if(dstPath)
+            {
+               AnscFreeMemory(dstPath);
+            }
+
          
             CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Before free_parameterValStruct_t...\n"));
             free_parameterValStruct_t(bus_handle, val_size, parameterval);

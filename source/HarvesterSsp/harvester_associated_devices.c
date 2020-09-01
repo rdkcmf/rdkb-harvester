@@ -43,6 +43,9 @@
 #define PRIVATE_WIFI_IDX_STARTS  0
 #define PRIVATE_WIFI_IDX_ENDS  1
 
+/* MAX SSID name buffer set as 512 bytes for qtn component*/
+#define STR_BUF_MAX 512
+
 static pthread_mutex_t idwMutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t idwCond = PTHREAD_COND_INITIALIZER;
 
@@ -621,7 +624,9 @@ void* StartAssociatedDeviceHarvesting( void *arg )
 
         ULONG output = 0;
         int k = 0;
-        char ssid[128] = {0};
+        /* CID: 79303 OVERRUN - Out-of-bounds access
+         * qtn-wifi component access the max buffer size as 512 bytes*/
+        char ssid[STR_BUF_MAX] = {0};
         int ret =  wifi_getSSIDNumberOfEntries(&output); //Tr181
 
         CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Number of SSID Entries = %ld ReturnValue [%d]\n", output, ret));
@@ -632,13 +637,13 @@ void* StartAssociatedDeviceHarvesting( void *arg )
             for (k = PRIVATE_WIFI_IDX_STARTS; k <= PRIVATE_WIFI_IDX_ENDS; k++)
             {
                 CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, PRIVATE WiFi, Idx = %d\n", k ));
-                ret = wifi_getSSIDName(k, (char*)&ssid);
+                ret = wifi_getSSIDName(k, ssid);
                 if (ret)
                 {
                     CcspHarvesterTrace(("RDK_LOG_ERROR, Harvester %s : wifi_getSSIDName returned error [%d] \n",__FUNCTION__,  ret));
                 }
 
-                ret = GetWiFiApGetAssocDevicesData(PRIVATE, k, (char*)&ssid);
+                ret = GetWiFiApGetAssocDevicesData(PRIVATE, k, ssid);
                 if (ret)
                 {
                     CcspHarvesterTrace(("RDK_LOG_ERROR, Harvester %s : GetWiFiApGetAssocDevicesData returned error [%d] for SSID[%s] \n",__FUNCTION__, ret, ssid));
@@ -649,13 +654,13 @@ void* StartAssociatedDeviceHarvesting( void *arg )
             for (k = PUBLIC_WIFI_IDX_STARTS; k <= PUBLIC_WIFI_IDX_ENDS; k++)
             {
                 CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, PUBLIC WiFi, Idx = %d\n", k ));
-                ret = wifi_getSSIDName(k, (char*)&ssid);
+                ret = wifi_getSSIDName(k, ssid);
                 if (ret)
                 {
                     CcspHarvesterTrace(("RDK_LOG_ERROR, Harvester %s : wifi_getSSIDName returned error [%d] \n",__FUNCTION__,  ret));
                 }
 
-                ret = GetWiFiApGetAssocDevicesData(PUBLIC, k, (char*)&ssid);
+                ret = GetWiFiApGetAssocDevicesData(PUBLIC, k, ssid);
                 if (ret)
                 {
                     CcspHarvesterTrace(("RDK_LOG_ERROR, Harvester %s : GetWiFiApGetAssocDevicesData returned error [%d] for SSID[%s] \n",__FUNCTION__, ret, ssid));

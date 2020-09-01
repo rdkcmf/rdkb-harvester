@@ -160,14 +160,15 @@ avro_writer_t prepare_rt_writer()
 
     fclose(fp);
 
+    /* CID: 135349 String not null terminated*/
+    rt_schema_buffer[lsSize] = '\0';
+
     //schemas
     avro_schema_error_t  error = NULL;
 
     //Master report/datum
     avro_schema_t radiotraffic_device_report_schema = NULL;
     
-     /* Coverity Fix CID: 135349 STRING_NULL*/
-    rt_schema_buffer[strlen(rt_schema_buffer)+1] = '\0';
 
     avro_schema_from_json(rt_schema_buffer, strlen(rt_schema_buffer),
                         &radiotraffic_device_report_schema, &error);

@@ -143,6 +143,9 @@ avro_writer_t prepare_writer()
     /* seek through file and get file size*/
     fseek( fp , 0L , SEEK_END);
     lSize = ftell( fp );
+    /* CID: 69140 Argument cannot be negative*/
+    if (lSize < 0) 
+        fclose(fp), fputs("lSize is negative value", stderr), exit(1);
 
     /*back to the start of the file*/
     rewind( fp );
@@ -157,6 +160,9 @@ avro_writer_t prepare_writer()
       fclose(fp), free(buffer), fputs("entire read fails", stderr), exit(1);
 
     fclose(fp);
+
+    /* CID:135642 String not null terminated*/
+    buffer [lSize]= '\0';
 
     //schemas
     avro_schema_error_t  error = NULL;

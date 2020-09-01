@@ -175,6 +175,8 @@ int msgBusInit(const char *name)
     {
         return 1; //Failure
     }
+/* CID: 61738 Logically dead code - bRunAsDaemon always TRUE*/
+#if 0
     else
     {
         while ( cmdChar != 'q' )
@@ -184,7 +186,7 @@ int msgBusInit(const char *name)
             cmd_dispatch(cmdChar);
         }
     }
-
+#endif
     err = Cdm_Term();
     if (err != CCSP_SUCCESS)
     {

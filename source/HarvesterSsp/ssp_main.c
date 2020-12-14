@@ -35,7 +35,7 @@
 #include "ccsp_custom_logs.h"
 #include "ccsp_harvesterLog_wrapper.h"
 #include "safec_lib_common.h"
-
+#include "secure_wrapper.h"
 
 #ifdef INCLUDE_BREAKPAD
 #include "breakpad_wrapper.h"
@@ -119,10 +119,9 @@ int harvester_loglevel_type_from_name(char *name, enum har_log_level_type_e *typ
  */
 int  cmd_dispatch(int  command)
 {
+    ANSC_STATUS  returnStatus        = ANSC_STATUS_SUCCESS;
     switch ( command )
     {
-        ANSC_STATUS  returnStatus	 = ANSC_STATUS_SUCCESS;
-
         case    'e' :
 
 #ifdef _ANSC_LINUX
@@ -195,7 +194,9 @@ int  cmd_dispatch(int  command)
 int msgBusInit(const char *name)
 {
     BOOL                            bRunAsDaemon       = TRUE;
+#if 0
     int                             cmdChar            = 0;
+#endif
 	
     extern ANSC_HANDLE bus_handle;
     char *subSys            = NULL;  
@@ -212,7 +213,7 @@ int msgBusInit(const char *name)
       exit(1);
     }
 
-    pComponentName = name;
+    pComponentName = (char*)name;
     if ( bRunAsDaemon ) 
         daemonize();
 
@@ -248,7 +249,7 @@ int msgBusInit(const char *name)
         }
     #endif
     
-    system("touch /tmp/harvester_initialized");
+    v_secure_system("touch /tmp/harvester_initialized");
     printf("Inside msgBusInit : /tmp/harvester_initialized created\n");
     CcspTraceInfo(("RDK_LOG_WARN, HARV : /tmp/harvester_initialized created\n"));
     CcspHarvesterTrace(("RDK_LOG_WARN,  HARV : /tmp/harvester_initialized created\n"));
@@ -350,9 +351,11 @@ void HarvesterLog(char *msg)
       else
       {
         CcspTraceInfo((LogMsg));
-      }
+      }  
     }
-	
+    // tok is unused
+    (void)(tok);	
+    (void)(len);
 }
 
 /*----------------------------------------------------------------------------*/

@@ -34,7 +34,7 @@
 #include "ccsp_harvesterLog_wrapper.h"
 #include "report_common.h"
 #include "safec_lib_common.h"
-
+#include "harvester_associated_devices.h"
 
 ULONG RISReportingPeriodDefault = DEFAULT_POLLING_INTERVAL;
 ULONG RISPollingPeriodDefault = DEFAULT_REPORTING_INTERVAL;
@@ -48,12 +48,10 @@ BOOL RISHarvesterStatus = FALSE;
 ULONG RISOverrideTTL = 300;
 ULONG RISOverrideTTLDefault = 300;
 
-char RadioBSSID[2][19] = {'\0','\0'};
+char RadioBSSID[2][19] = {{'\0','\0'}};
 
 static pthread_mutex_t risMutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t risCond = PTHREAD_COND_INITIALIZER;
-
-static sem_t mutex;
 
 ULONG RadioTrafficPeriods[13] = {1,5,15,30,60,300,900,1800,3600,10800,21600,43200,86400};
 
@@ -91,7 +89,7 @@ static void WaitForPthreadConditionTimeoutRIS()
     clock_gettime(CLOCK_REALTIME, &_now);
     _ts.tv_sec = _now.tv_sec + GetRISPollingPeriod();
 
-    CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s : Waiting for %d sec\n",__FUNCTION__,GetRISPollingPeriod()));
+    CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s : Waiting for %lu sec\n",__FUNCTION__,GetRISPollingPeriod()));
 
     n = pthread_cond_timedwait(&risCond, &risMutex, &_ts);
     if(n == ETIMEDOUT)
@@ -173,7 +171,7 @@ BOOL GetRISHarvestingStatus()
 int SetRISReportingPeriod(ULONG interval)
 {
     CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s ENTER\n", __FUNCTION__ ));
-    CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s EXIT Old[%d] New[%d] \n", __FUNCTION__, RISReportingPeriod, interval ));
+    CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s EXIT Old[%lu] New[%lu] \n", __FUNCTION__, RISReportingPeriod, interval ));
     RISReportingPeriod = interval;
     SetRISOverrideTTL(2*RISReportingPeriod);
     return 0;
@@ -182,7 +180,7 @@ int SetRISReportingPeriod(ULONG interval)
 ULONG GetRISReportingPeriod()
 {
     CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s ENTER\n", __FUNCTION__ ));
-    CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s EXIT RISReportingPeriod[%d] \n", __FUNCTION__, RISReportingPeriod ));    
+    CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s EXIT RISReportingPeriod[%lu] \n", __FUNCTION__, RISReportingPeriod ));    
     return RISReportingPeriod;
 }
 
@@ -190,7 +188,7 @@ int SetRISPollingPeriod(ULONG interval)
 {
     int ret;
     CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s ENTER\n", __FUNCTION__ ));
-    CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s EXIT Old[%d] New[%d] \n", __FUNCTION__, RISPollingPeriod, interval ));    
+    CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s EXIT Old[%lu] New[%lu] \n", __FUNCTION__, RISPollingPeriod, interval ));    
     RISPollingPeriod = interval;
 
     pthread_mutex_lock(&risMutex);
@@ -222,14 +220,14 @@ BOOL ValidateRISPeriod(ULONG interval)
 ULONG GetRISPollingPeriod()
 {
     CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s ENTER\n", __FUNCTION__ ));
-    CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s EXIT RISReportingPeriod[%d] \n", __FUNCTION__, RISPollingPeriod ));
+    CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s EXIT RISReportingPeriod[%lu] \n", __FUNCTION__, RISPollingPeriod ));
     return RISPollingPeriod;
 }
 
 int SetRISReportingPeriodDefault(ULONG interval)
 {
     CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s ENTER\n", __FUNCTION__ ));
-    CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s EXIT Old[%d] New[%d] \n", __FUNCTION__, RISReportingPeriodDefault, interval ));   
+    CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s EXIT Old[%lu] New[%lu] \n", __FUNCTION__, RISReportingPeriodDefault, interval ));   
     RISReportingPeriodDefault = interval;
     return 0;
 }
@@ -237,14 +235,14 @@ int SetRISReportingPeriodDefault(ULONG interval)
 ULONG GetRISReportingPeriodDefault()
 {
     CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s ENTER\n", __FUNCTION__ ));
-    CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s EXIT RISReportingPeriodDefault[%d] \n", __FUNCTION__, RISReportingPeriodDefault ));  
+    CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s EXIT RISReportingPeriodDefault[%lu] \n", __FUNCTION__, RISReportingPeriodDefault ));  
     return RISReportingPeriodDefault;
 }
 
 int SetRISPollingPeriodDefault(ULONG interval)
 {
     CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s ENTER\n", __FUNCTION__ ));
-    CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s EXIT Old[%d] New[%d] \n", __FUNCTION__, RISPollingPeriodDefault, interval )); 
+    CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s EXIT Old[%lu] New[%lu] \n", __FUNCTION__, RISPollingPeriodDefault, interval )); 
     RISPollingPeriodDefault = interval;
     return 0;
 }
@@ -252,21 +250,21 @@ int SetRISPollingPeriodDefault(ULONG interval)
 ULONG GetRISPollingPeriodDefault()
 {
     CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s ENTER\n", __FUNCTION__ ));
-    CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s EXIT RISPollingPeriodDefault[%d] \n", __FUNCTION__, RISPollingPeriodDefault ));  
+    CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s EXIT RISPollingPeriodDefault[%lu \n", __FUNCTION__, RISPollingPeriodDefault ));  
     return RISPollingPeriodDefault;
 }
 
 ULONG GetRISOverrideTTL()
 {
     CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s ENTER\n", __FUNCTION__ ));
-    CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s EXIT RISOverrideTTL[%d] \n", __FUNCTION__, RISOverrideTTL ));  
+    CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s EXIT RISOverrideTTL[%lu] \n", __FUNCTION__, RISOverrideTTL ));  
     return RISOverrideTTL;
 }
 
 int SetRISOverrideTTL(ULONG count)
 {
     CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s ENTER\n", __FUNCTION__ ));
-    CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s EXIT Old[%d] New[%d] \n", __FUNCTION__, RISOverrideTTL, count ));
+    CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s EXIT Old[%lu] New[%lu] \n", __FUNCTION__, RISOverrideTTL, count ));
     RISOverrideTTL = count;
     return 0;
 }
@@ -274,7 +272,7 @@ int SetRISOverrideTTL(ULONG count)
 ULONG GetRISOverrideTTLDefault()
 {
     CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s ENTER\n", __FUNCTION__ ));
-    CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s EXIT RISOverrideTTLDefault[%d] \n", __FUNCTION__, RISOverrideTTLDefault ));    
+    CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s EXIT RISOverrideTTLDefault[%lu] \n", __FUNCTION__, RISOverrideTTLDefault ));    
     return RISOverrideTTLDefault;
 }
 
@@ -300,7 +298,8 @@ int _rtsyscmd(char *cmd, char *retBuf, int retBufSize)
             bufbytes = bufSize - 1;
         }
 
-        fgets(ptr, bufbytes, f);
+        if (fgets(ptr, bufbytes, f) == NULL)
+           CcspHarvesterTrace(("RDK_LOG_DEBUG, Harvester %s : fgets error\n",__FUNCTION__));
         readbytes = strlen(ptr);
         if ( readbytes == 0)
             break;
@@ -503,27 +502,27 @@ int GetRadioTrafficData(int radioIndex)
         CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG,Radio[%d] freqband [%s] \n", radioIndex, freqband));
         CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG,Radio[%d] opchanbw [%s] \n", radioIndex, opchanbw));
 
-        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG,Radio[%d] radio_BytesSent [%d] \n", radioIndex, radio_traffic_stats->radio_BytesSent));  
-        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG,Radio[%d] radio_BytesReceived [%d] \n", radioIndex, radio_traffic_stats->radio_BytesReceived));
-        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG,Radio[%d] radio_PacketsSent [%d] \n", radioIndex, radio_traffic_stats->radio_PacketsSent));  
-        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG,Radio[%d] radio_PacketsReceived [%d] \n", radioIndex, radio_traffic_stats->radio_PacketsReceived));
-        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG,Radio[%d] radio_ErrorsSent [%d] \n", radioIndex, radio_traffic_stats->radio_ErrorsSent));
-        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG,Radio[%d] radio_ErrorsReceived [%d] \n", radioIndex, radio_traffic_stats->radio_ErrorsReceived));
-        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG,Radio[%d] radio_DiscardPacketsSent [%d] \n", radioIndex, radio_traffic_stats->radio_DiscardPacketsSent));
-        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG,Radio[%d] radio_DiscardPacketsReceived [%d] \n", radioIndex, radio_traffic_stats->radio_DiscardPacketsReceived)); 
-        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG,Radio[%d] radio_PLCPErrorCount [%d] \n", radioIndex, radio_traffic_stats->radio_PLCPErrorCount));
-        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG,Radio[%d] radio_FCSErrorCount [%d] \n", radioIndex, radio_traffic_stats->radio_FCSErrorCount));  
-        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG,Radio[%d] radio_InvalidMACCount [%d] \n", radioIndex, radio_traffic_stats->radio_InvalidMACCount));
-        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG,Radio[%d] radio_PacketsOtherReceived [%d] \n", radioIndex, radio_traffic_stats->radio_PacketsOtherReceived));
+        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG,Radio[%d] radio_BytesSent [%lu] \n", radioIndex, radio_traffic_stats->radio_BytesSent));  
+        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG,Radio[%d] radio_BytesReceived [%lu] \n", radioIndex, radio_traffic_stats->radio_BytesReceived));
+        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG,Radio[%d] radio_PacketsSent [%lu] \n", radioIndex, radio_traffic_stats->radio_PacketsSent));  
+        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG,Radio[%d] radio_PacketsReceived [%lu] \n", radioIndex, radio_traffic_stats->radio_PacketsReceived));
+        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG,Radio[%d] radio_ErrorsSent [%lu] \n", radioIndex, radio_traffic_stats->radio_ErrorsSent));
+        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG,Radio[%d] radio_ErrorsReceived [%lu] \n", radioIndex, radio_traffic_stats->radio_ErrorsReceived));
+        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG,Radio[%d] radio_DiscardPacketsSent [%lu] \n", radioIndex, radio_traffic_stats->radio_DiscardPacketsSent));
+        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG,Radio[%d] radio_DiscardPacketsReceived [%lu] \n", radioIndex, radio_traffic_stats->radio_DiscardPacketsReceived)); 
+        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG,Radio[%d] radio_PLCPErrorCount [%lu] \n", radioIndex, radio_traffic_stats->radio_PLCPErrorCount));
+        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG,Radio[%d] radio_FCSErrorCount [%lu] \n", radioIndex, radio_traffic_stats->radio_FCSErrorCount));  
+        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG,Radio[%d] radio_InvalidMACCount [%lu] \n", radioIndex, radio_traffic_stats->radio_InvalidMACCount));
+        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG,Radio[%d] radio_PacketsOtherReceived [%lu] \n", radioIndex, radio_traffic_stats->radio_PacketsOtherReceived));
         CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG,Radio[%d] radio_NoiseFloor [%d] \n", radioIndex, radio_traffic_stats->radio_NoiseFloor));
-        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG,Radio[%d] radio_ChannelUtilization [%d] \n", radioIndex, radio_traffic_stats->radio_ChannelUtilization));
+        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG,Radio[%d] radio_ChannelUtilization [%lu] \n", radioIndex, radio_traffic_stats->radio_ChannelUtilization));
         CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG,Radio[%d] radio_ActivityFactor [%d] \n", radioIndex, radio_traffic_stats->radio_ActivityFactor)); 
         CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG,Radio[%d] radio_CarrierSenseThreshold_Exceeded [%d] \n", radioIndex, radio_traffic_stats->radio_CarrierSenseThreshold_Exceeded));
         CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG,Radio[%d] radio_RetransmissionMetirc [%d] \n", radioIndex, radio_traffic_stats->radio_RetransmissionMetirc)); 
         CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG,Radio[%d] radio_MaximumNoiseFloorOnChannel [%d] \n", radioIndex, radio_traffic_stats->radio_MaximumNoiseFloorOnChannel));
         CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG,Radio[%d] radio_MinimumNoiseFloorOnChannel [%d] \n", radioIndex, radio_traffic_stats->radio_MinimumNoiseFloorOnChannel)); 
         CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG,Radio[%d] radio_MedianNoiseFloorOnChannel [%d] \n", radioIndex, radio_traffic_stats->radio_MedianNoiseFloorOnChannel));
-        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG,Radio[%d] radio_StatisticsStartTime [%d] \n", radioIndex, radio_traffic_stats->radio_StatisticsStartTime));
+        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG,Radio[%d] radio_StatisticsStartTime [%lu] \n", radioIndex, radio_traffic_stats->radio_StatisticsStartTime));
 
         CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG,************RadioTraffic Data Ends************* \n"));
         CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG,***************************************** \n"));

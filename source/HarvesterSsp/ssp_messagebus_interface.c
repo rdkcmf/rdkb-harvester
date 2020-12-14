@@ -32,6 +32,14 @@ extern char                 g_Subsystem[32];
 extern ANSC_HANDLE          g_MessageBusHandle_Irep; 
 extern char                 g_SubSysPrefix_Irep[32];
 
+BOOLEAN waitConditionReady
+    (
+        void*                           hMBusHandle,
+        const char*                     dst_component_id,
+        char*                           dbus_path,
+        char*                           src_component_id
+    );
+
 #ifdef _ANSC_LINUX
 
 DBusHandlerResult CcspComp_path_message_func(DBusConnection  *conn,DBusMessage *message,void  *user_data)

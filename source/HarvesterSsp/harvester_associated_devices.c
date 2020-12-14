@@ -51,8 +51,6 @@
 static pthread_mutex_t idwMutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t idwCond = PTHREAD_COND_INITIALIZER;
 
-static sem_t mutex;
-
 ULONG AssociatedDevicePeriods[] = {1,5,10,15,30,60,300,900,1800,3600,10800,21600,43200,86400};
 
 ULONG IDWPollingPeriodDefault = DEFAULT_POLLING_INTERVAL;
@@ -66,8 +64,6 @@ BOOL IDWHarvesterStatus = FALSE;
 
 ULONG IDWOverrideTTL = TTL_INTERVAL;
 ULONG IDWOverrideTTLDefault = DEFAULT_TTL_INTERVAL;
-
-bool isvalueinarray(ULONG val, ULONG *arr, int size);
 
 void* StartAssociatedDeviceHarvesting( void *arg );
 int _syscmd(char *cmd, char *retBuf, int retBufSize);
@@ -117,7 +113,7 @@ static void WaitForPthreadConditionTimeoutIDW()
     clock_gettime(CLOCK_REALTIME, &_now);
     _ts.tv_sec = _now.tv_sec + GetIDWPollingPeriod();
 
-    CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s : Waiting for %d sec\n",__FUNCTION__,GetIDWPollingPeriod()));
+    CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s : Waiting for %lu sec\n",__FUNCTION__,GetIDWPollingPeriod()));
 
     n = pthread_cond_timedwait(&idwCond, &idwMutex, &_ts);
     if(n == ETIMEDOUT)
@@ -137,7 +133,7 @@ static void WaitForPthreadConditionTimeoutIDW()
 
 }
 
-bool isvalueinarray(ULONG val, ULONG *arr, int size)
+BOOL isvalueinarray(ULONG val, ULONG *arr, int size)
 {
     int i;
     for (i=0; i < size; i++) {
@@ -329,7 +325,8 @@ int _syscmd(char *cmd, char *retBuf, int retBufSize)
             bufbytes = bufSize - 1;
         }
 
-        fgets(ptr, bufbytes, f);
+        if (fgets(ptr, bufbytes, f) == NULL)
+           CcspHarvesterTrace(("RDK_LOG_DEBUG, Harvester %s : fgets error\n",__FUNCTION__));
         readbytes = strlen(ptr);
         if ( readbytes == 0)
             break;

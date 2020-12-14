@@ -107,7 +107,8 @@ int _napondemandsyscmd(char *cmd, char *retBuf, int retBufSize)
             bufbytes = bufSize - 1;
         }
 
-        fgets(ptr, bufbytes, f);
+        if (fgets(ptr, bufbytes, f) == NULL)
+           CcspHarvesterTrace(("RDK_LOG_DEBUG, Harvester %s : fgets error\n",__FUNCTION__));
         readbytes = strlen(ptr);
         if ( readbytes == 0)
             break;
@@ -248,7 +249,7 @@ int GetRadioNeighboringAPOnDemandData(int radioIndex, char* radioIfName)
     if(( 0 == ret ) && ( NULL != neighbor_ap_array ) && ( array_size > 0 ) ) 
     {
         add_to_nap_ondemand_list(radioIfName, array_size, neighbor_ap_array, freqband, channel);
-        int i, j;
+        int i;
         wifi_neighbor_ap2_t *ds = NULL;
         CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Neighboring AP Array Size is %d \n", array_size));
         CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, ************Neighboring AP Data Begins************* \n"));

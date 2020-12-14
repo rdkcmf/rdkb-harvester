@@ -36,5 +36,5 @@ libHarvesterSsp_la_SOURCES = cosa_harvester_dml.c  \
                              ssp_messagebus_interface.c  \
                              dm_pack_datamodel.c
 
-libHarvesterSsp_la_LDFLAGS = -lccsp_common -lm -lpthread -lavro -lhal_wifi -lmsgpackc -ltrower-base64 -luuid
+libHarvesterSsp_la_LDFLAGS = -lccsp_common -lm -lpthread -lavro -lhal_wifi -lmsgpackc -ltrower-base64 -luuid -lsecure_wrapper
 libHarvesterSsp_la_CFLAGS = -I${top_srcdir}/include

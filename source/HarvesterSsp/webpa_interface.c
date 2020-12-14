@@ -23,6 +23,8 @@
 #include "harvester.h"
 #include "ccsp_harvesterLog_wrapper.h"
 #include <sysevent/sysevent.h>
+#include <math.h>
+#include <syscfg/syscfg.h>
 
 #include "libparodus.h"
 #include "webpa_interface.h"
@@ -45,6 +47,8 @@ static int check_ethernet_wan_status();
 
 libpd_instance_t client_instance;
 static void *handle_parodus();
+
+int s_sysevent_connect (token_t *out_se_token);
 
 #define CCSP_AGENT_WEBPA_SUBSYSTEM         "eRT."
 
@@ -489,7 +493,7 @@ char * getDeviceMac()
         }
         else
         {
-            if(!Cosa_FindDestComp(&getList, &dstComp, &dstPath) || !dstComp || !dstPath)
+            if(!Cosa_FindDestComp(getList, &dstComp, &dstPath) || !dstComp || !dstPath)
             {
                 CcspHarvesterConsoleTrace(("RDK_LOG_ERROR, Can not find Dest Component \n"));
                 pthread_mutex_unlock(&device_mac_mutex);

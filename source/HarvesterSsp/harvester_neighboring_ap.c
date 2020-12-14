@@ -38,8 +38,6 @@
 static pthread_mutex_t napMutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t napCond = PTHREAD_COND_INITIALIZER;
 
-static sem_t mutex;
-
 ULONG NAPReportingPeriodDefault = 43200;
 ULONG NAPPollingPeriodDefault = 21600;
 
@@ -89,7 +87,7 @@ static void WaitForPthreadConditionTimeoutNAP()
     clock_gettime(CLOCK_REALTIME, &_now);
     _ts.tv_sec = _now.tv_sec + GetNAPPollingPeriod();
 
-    CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s : Waiting for %d sec\n",__FUNCTION__,GetNAPPollingPeriod()));
+    CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s : Waiting for %lu sec\n",__FUNCTION__,GetNAPPollingPeriod()));
 
     n = pthread_cond_timedwait(&napCond, &napMutex, &_ts);
     if(n == ETIMEDOUT)
@@ -171,7 +169,7 @@ BOOL GetNAPHarvestingStatus()
 int SetNAPReportingPeriod(ULONG interval)
 {
     CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s ENTER\n", __FUNCTION__ ));
-    CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s EXIT Old[%d] New[%d] \n", __FUNCTION__, NAPReportingPeriod, interval ));
+    CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s EXIT Old[%lu] New[%lu] \n", __FUNCTION__, NAPReportingPeriod, interval ));
     NAPReportingPeriod = interval;
     SetNAPOverrideTTL(2*NAPReportingPeriod);
     return 0;
@@ -180,7 +178,7 @@ int SetNAPReportingPeriod(ULONG interval)
 ULONG GetNAPReportingPeriod()
 {
     CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s ENTER\n", __FUNCTION__ ));
-    CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s EXIT NAPReportingPeriod[%d] \n", __FUNCTION__, NAPReportingPeriod ));
+    CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s EXIT NAPReportingPeriod[%lu] \n", __FUNCTION__, NAPReportingPeriod ));
     return NAPReportingPeriod;
 }
 
@@ -188,7 +186,7 @@ int SetNAPPollingPeriod(ULONG interval)
 {
     int ret;
     CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s ENTER\n", __FUNCTION__ ));
-    CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s EXIT Old[%d] New[%d] \n", __FUNCTION__, NAPPollingPeriod, interval ));
+    CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s EXIT Old[%lu] New[%lu] \n", __FUNCTION__, NAPPollingPeriod, interval ));
     NAPPollingPeriod = interval;
 
     pthread_mutex_lock(&napMutex);
@@ -211,14 +209,14 @@ int SetNAPPollingPeriod(ULONG interval)
 ULONG GetNAPPollingPeriod()
 {
     CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s ENTER\n", __FUNCTION__ ));
-    CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s EXIT NAPPollingPeriod[%d] \n", __FUNCTION__, NAPPollingPeriod ));
+    CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s EXIT NAPPollingPeriod[%lu] \n", __FUNCTION__, NAPPollingPeriod ));
     return NAPPollingPeriod;
 }
 
 int SetNAPReportingPeriodDefault(ULONG interval)
 {
     CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s ENTER\n", __FUNCTION__ ));
-    CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s EXIT Old[%d] New[%d] \n", __FUNCTION__, NAPReportingPeriodDefault, interval ));
+    CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s EXIT Old[%lu] New[%lu] \n", __FUNCTION__, NAPReportingPeriodDefault, interval ));
     NAPReportingPeriodDefault = interval;
     return 0;
 }
@@ -226,14 +224,14 @@ int SetNAPReportingPeriodDefault(ULONG interval)
 ULONG GetNAPReportingPeriodDefault()
 {
     CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s ENTER\n", __FUNCTION__ ));
-    CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s EXIT NAPReportingPeriodDefault[%d] \n", __FUNCTION__, NAPReportingPeriodDefault ));
+    CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s EXIT NAPReportingPeriodDefault[%lu] \n", __FUNCTION__, NAPReportingPeriodDefault ));
     return NAPReportingPeriodDefault;
 }
 
 int SetNAPPollingPeriodDefault(ULONG interval)
 {
     CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s ENTER\n", __FUNCTION__ ));
-    CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s EXIT Old[%d] New[%d] \n", __FUNCTION__, NAPPollingPeriodDefault, interval ));
+    CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s EXIT Old[%lu] New[%lu] \n", __FUNCTION__, NAPPollingPeriodDefault, interval ));
     NAPPollingPeriodDefault = interval;
     return 0;
 }
@@ -241,21 +239,21 @@ int SetNAPPollingPeriodDefault(ULONG interval)
 ULONG GetNAPPollingPeriodDefault()
 {
     CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s ENTER\n", __FUNCTION__ ));
-    CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s EXIT NAPPollingPeriodDefault[%d] \n", __FUNCTION__, NAPPollingPeriodDefault ));
+    CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s EXIT NAPPollingPeriodDefault[%lu] \n", __FUNCTION__, NAPPollingPeriodDefault ));
     return NAPPollingPeriodDefault;
 }
 
 ULONG GetNAPOverrideTTL()
 {
     CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s ENTER\n", __FUNCTION__ ));
-    CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s EXIT NAPOverrideTTL[%d] \n", __FUNCTION__, NAPOverrideTTL ));
+    CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s EXIT NAPOverrideTTL[%lu] \n", __FUNCTION__, NAPOverrideTTL ));
     return NAPOverrideTTL;
 }
 
 int SetNAPOverrideTTL(ULONG count)
 {
     CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s ENTER\n", __FUNCTION__ ));
-    CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s EXIT Old[%d] New[%d] \n", __FUNCTION__, NAPOverrideTTL, count ));
+    CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s EXIT Old[%lu] New[%lu] \n", __FUNCTION__, NAPOverrideTTL, count ));
     NAPOverrideTTL = count;
     return 0;
 }
@@ -263,7 +261,7 @@ int SetNAPOverrideTTL(ULONG count)
 ULONG GetNAPOverrideTTLDefault()
 {
     CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s ENTER\n", __FUNCTION__ ));
-    CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s EXIT NAPOverrideTTLDefault[%d] \n", __FUNCTION__, NAPOverrideTTLDefault ));
+    CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s EXIT NAPOverrideTTLDefault[%lu] \n", __FUNCTION__, NAPOverrideTTLDefault ));
     return NAPOverrideTTLDefault;
 }
 
@@ -294,7 +292,8 @@ int _napsyscmd(char *cmd, char *retBuf, int retBufSize)
             bufbytes = bufSize - 1;
         }
 
-        fgets(ptr, bufbytes, f);
+        if (fgets(ptr, bufbytes, f) == NULL)
+            CcspHarvesterTrace(("RDK_LOG_DEBUG, Harvester %s : fgets error\n",__FUNCTION__));
         readbytes = strlen(ptr);
         if ( readbytes == 0)
             break;
@@ -433,7 +432,7 @@ int GetRadioNeighboringAPData(int radioIndex, char* radioIfName)
     {
         add_to_nap_list(radioIfName, array_size, neighbor_ap_array, freqband, channel);
 
-        int i, j;
+        int i;
         wifi_neighbor_ap2_t *ds = NULL;
         CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, ************Neighboring AP Data Begins************* \n"));
         CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Neighboring AP Array Size is %d \n", array_size));

@@ -81,6 +81,7 @@ extern char* GetRISSchemaBuffer();
 extern int GetRISSchemaBufferSize();
 extern char* GetRISSchemaIDBuffer();
 extern int GetRISSchemaIDBufferSize();
+INT wifi_context_init();
 
 
 ANSC_STATUS GetNVRamULONGConfiguration(char* setting, ULONG* value)
@@ -107,11 +108,11 @@ ANSC_STATUS SetNVRamULONGConfiguration(char* setting, ULONG value)
 
     if ((retPsmSet == CCSP_SUCCESS) && (psm_value == value))
     {
-      CcspHarvesterConsoleTrace(("%s PSM value is same for setting [%s] Value [%d]\n",__FUNCTION__,setting, value));
+      CcspHarvesterConsoleTrace(("%s PSM value is same for setting [%s] Value [%lu]\n",__FUNCTION__,setting, value));
       return retPsmSet;
     }
 
-    rc = sprintf_s(psmValue,sizeof(psmValue),"%d",value);
+    rc = sprintf_s(psmValue,sizeof(psmValue),"%lu",value);
     if(rc < EOK)
     {
       ERR_CHK(rc);
@@ -428,7 +429,7 @@ InterfaceDevicesWifi_Default_GetParamUlongValue
     if((!ind) && (rc == EOK))
     {
         *puLong =  GetIDWPollingPeriodDefault();
-        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s : ParamName[%s] Value[%d] \n", __FUNCTION__ , ParamName, *puLong ));
+        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s : ParamName[%s] Value[%lu] \n", __FUNCTION__ , ParamName, *puLong ));
         return TRUE;
     }
 
@@ -437,7 +438,7 @@ InterfaceDevicesWifi_Default_GetParamUlongValue
     if((!ind) && (rc == EOK))
     {
         *puLong =  GetIDWReportingPeriodDefault();
-        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s : ParamName[%s] Value[%d] \n", __FUNCTION__ , ParamName, *puLong ));
+        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s : ParamName[%s] Value[%lu] \n", __FUNCTION__ , ParamName, *puLong ));
         return TRUE;
     }
 
@@ -446,7 +447,7 @@ InterfaceDevicesWifi_Default_GetParamUlongValue
     if((!ind) && (rc == EOK))
     {
         *puLong =  GetIDWOverrideTTLDefault();
-        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s : ParamName[%s] Value[%d] \n", __FUNCTION__ , ParamName, *puLong ));
+        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s : ParamName[%s] Value[%lu] \n", __FUNCTION__ , ParamName, *puLong ));
         return TRUE;
     }
 
@@ -475,7 +476,7 @@ InterfaceDevicesWifi_GetParamUlongValue
     if((!ind) && (rc == EOK))
     {
         *puLong =  GetIDWPollingPeriod();
-        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s : ParamName[%s] Value[%d] \n", __FUNCTION__ , ParamName, *puLong ));
+        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s : ParamName[%s] Value[%lu] \n", __FUNCTION__ , ParamName, *puLong ));
         return TRUE;
     }
 
@@ -484,7 +485,7 @@ InterfaceDevicesWifi_GetParamUlongValue
     if((!ind) && (rc == EOK))
     {
         *puLong =  GetIDWReportingPeriod();
-        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s : ParamName[%s] Value[%d] \n", __FUNCTION__ , ParamName, *puLong ));
+        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s : ParamName[%s] Value[%lu] \n", __FUNCTION__ , ParamName, *puLong ));
         return TRUE;
     }
 
@@ -514,7 +515,7 @@ InterfaceDevicesWifi_SetParamUlongValue
     {
         g_pHarvester->bIDWPollingPeriodChanged = true;
         g_pHarvester->uIDWPollingPeriod = uValue;
-        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s : ParamName[%s] Value[%d] \n", __FUNCTION__ , ParamName, uValue ));
+        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s : ParamName[%s] Value[%lu] \n", __FUNCTION__ , ParamName, uValue ));
         return TRUE;
     }
 
@@ -524,7 +525,7 @@ InterfaceDevicesWifi_SetParamUlongValue
     {
         g_pHarvester->bIDWReportingPeriodChanged = true;
         g_pHarvester->uIDWReportingPeriod = uValue;
-        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s : ParamName[%s] Value[%d] \n", __FUNCTION__ , ParamName, uValue ));
+        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s : ParamName[%s] Value[%lu] \n", __FUNCTION__ , ParamName, uValue ));
         return TRUE;
     }
 
@@ -553,7 +554,7 @@ InterfaceDevicesWifi_Default_SetParamUlongValue
     {
         g_pHarvester->bIDWDefaultPollingPeriodChanged = true;
         g_pHarvester->uIDWDefaultPollingPeriod = uValue;
-        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s : ParamName[%s] Value[%d] \n", __FUNCTION__ , ParamName, uValue ));
+        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s : ParamName[%s] Value[%lu] \n", __FUNCTION__ , ParamName, uValue ));
         return TRUE;
     }
 
@@ -563,7 +564,7 @@ InterfaceDevicesWifi_Default_SetParamUlongValue
     {
         g_pHarvester->bIDWDefaultReportingPeriodChanged = true;
         g_pHarvester->uIDWDefaultReportingPeriod = uValue;
-        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s : ParamName[%s] Value[%d] \n", __FUNCTION__ , ParamName, uValue ));
+        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s : ParamName[%s] Value[%lu] \n", __FUNCTION__ , ParamName, uValue ));
         return TRUE;
     }
 
@@ -605,7 +606,7 @@ InterfaceDevicesWifi_GetParamStringValue
         }
         else
     {
-    CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Buffer Size [%d] InputSize [%d]\n", bufsize, *pUlSize));
+    CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Buffer Size [%d] InputSize [%lu]\n", bufsize, *pUlSize));
         if (bufsize < *pUlSize)
         {
             /*
@@ -647,7 +648,7 @@ InterfaceDevicesWifi_GetParamStringValue
         else
         {
 
-    CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Buffer Size [%d] InputSize [%d]\n", bufsize, *pUlSize));
+    CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Buffer Size [%d] InputSize [%lu]\n", bufsize, *pUlSize));
         if (bufsize < *pUlSize)
         {
             rc = strcpy_s(pValue,*pUlSize, GetIDWSchemaIDBuffer());
@@ -723,7 +724,7 @@ InterfaceDevicesWifi_Validate
         BOOL validated = ValidateIDWPeriod(g_pHarvester->uIDWDefaultPollingPeriod);    
         if(!validated)
         {
-            CcspHarvesterTrace(("RDK_LOG_ERROR, Harvester %s : Default PollingPeriod Validation Failed : [%d] Value not Allowed \n", __FUNCTION__ , g_pHarvester->uIDWDefaultPollingPeriod));
+           CcspHarvesterTrace(("RDK_LOG_ERROR, Harvester %s : Default PollingPeriod Validation Failed : [%lu] Value not Allowed \n", __FUNCTION__ , g_pHarvester->uIDWDefaultPollingPeriod));
             rc =  strcpy_s(pReturnParamName,*puLength, "PollingPeriod");
             if(rc != EOK)
             {
@@ -740,7 +741,7 @@ InterfaceDevicesWifi_Validate
         BOOL validated = ValidateIDWPeriod(g_pHarvester->uIDWDefaultReportingPeriod);    
         if(!validated)
         {
-            CcspHarvesterTrace(("RDK_LOG_ERROR, Harvester %s : Default ReportingPeriod Validation Failed : [%d] Value not Allowed \n", __FUNCTION__ , g_pHarvester->uIDWDefaultReportingPeriod));
+            CcspHarvesterTrace(("RDK_LOG_ERROR, Harvester %s : Default ReportingPeriod Validation Failed : [%lu] Value not Allowed \n", __FUNCTION__ , g_pHarvester->uIDWDefaultReportingPeriod));
             rc =  strcpy_s(pReturnParamName,*puLength, "ReportingPeriod");
             if(rc != EOK)
             {
@@ -757,7 +758,7 @@ InterfaceDevicesWifi_Validate
         BOOL validated = ValidateIDWPeriod(g_pHarvester->uIDWPollingPeriod);    
         if(!validated)
         {
-            CcspHarvesterTrace(("RDK_LOG_ERROR, Harvester %s : PollingPeriod Validation Failed : [%d] Value not Allowed \n", __FUNCTION__ , g_pHarvester->uIDWPollingPeriod));
+            CcspHarvesterTrace(("RDK_LOG_ERROR, Harvester %s : PollingPeriod Validation Failed : [%lu] Value not Allowed \n", __FUNCTION__ , g_pHarvester->uIDWPollingPeriod));
             rc =  strcpy_s(pReturnParamName,*puLength, "PollingPeriod");
             if(rc != EOK)
             {
@@ -769,7 +770,7 @@ InterfaceDevicesWifi_Validate
         }
         if(GetIDWHarvestingStatus() && g_pHarvester->uIDWPollingPeriod > GetIDWPollingPeriod())
         {
-            CcspHarvesterTrace(("RDK_LOG_ERROR, Harvester %s : PollingPeriod Validation Failed : New Polling Period [%d] > Current Polling Period [%d] \n", __FUNCTION__ , g_pHarvester->uIDWPollingPeriod, GetIDWPollingPeriod() ));
+            CcspHarvesterTrace(("RDK_LOG_ERROR, Harvester %s : PollingPeriod Validation Failed : New Polling Period [%lu] > Current Polling Period [%lu] \n", __FUNCTION__ , g_pHarvester->uIDWPollingPeriod, GetIDWPollingPeriod() ));
             rc =  strcpy_s(pReturnParamName,*puLength, "PollingPeriod");
             if(rc != EOK)
             {
@@ -783,7 +784,7 @@ InterfaceDevicesWifi_Validate
         ULONG period = (g_pHarvester->bIDWReportingPeriodChanged == TRUE) ? g_pHarvester->uIDWReportingPeriod : GetIDWReportingPeriod();
         if(g_pHarvester->uIDWPollingPeriod > period)
         {
-            CcspHarvesterTrace(("RDK_LOG_ERROR, Harvester %s : PollingPeriod Validation Failed : New Polling Period [%d] > Current Reporting Period [%d] \n", __FUNCTION__ , g_pHarvester->uIDWPollingPeriod, period ));
+            CcspHarvesterTrace(("RDK_LOG_ERROR, Harvester %s : PollingPeriod Validation Failed : New Polling Period [%lu] > Current Reporting Period [%lu] \n", __FUNCTION__ , g_pHarvester->uIDWPollingPeriod, period ));
             rc =  strcpy_s(pReturnParamName,*puLength, "PollingPeriod");
             if(rc != EOK)
             {
@@ -800,7 +801,7 @@ InterfaceDevicesWifi_Validate
         BOOL validated = ValidateIDWPeriod(g_pHarvester->uIDWReportingPeriod);    
         if(!validated)
         {
-            CcspHarvesterTrace(("RDK_LOG_ERROR, Harvester %s : ReportingPeriod Validation Failed : [%d] Value not Allowed \n", __FUNCTION__ , g_pHarvester->uIDWReportingPeriod));
+            CcspHarvesterTrace(("RDK_LOG_ERROR, Harvester %s : ReportingPeriod Validation Failed : [%lu] Value not Allowed \n", __FUNCTION__ , g_pHarvester->uIDWReportingPeriod));
             rc =  strcpy_s(pReturnParamName,*puLength, "ReportingPeriod");
             if(rc != EOK)
             {
@@ -813,7 +814,7 @@ InterfaceDevicesWifi_Validate
         ULONG period = (g_pHarvester->bIDWPollingPeriodChanged == TRUE) ? g_pHarvester->uIDWPollingPeriod : GetIDWPollingPeriod();
         if(g_pHarvester->uIDWReportingPeriod < period)
         {
-            CcspHarvesterTrace(("RDK_LOG_ERROR, Harvester %s : ReportingPeriod Validation Failed : New Reporting Period [%d] < Current Polling Period [%d] \n", __FUNCTION__ , g_pHarvester->uIDWReportingPeriod, period ));
+            CcspHarvesterTrace(("RDK_LOG_ERROR, Harvester %s : ReportingPeriod Validation Failed : New Reporting Period [%lu] < Current Polling Period [%lu] \n", __FUNCTION__ , g_pHarvester->uIDWReportingPeriod, period ));
             rc =  strcpy_s(pReturnParamName,*puLength, "ReportingPeriod");
             if(rc != EOK)
             {
@@ -825,7 +826,7 @@ InterfaceDevicesWifi_Validate
         }
         if(GetIDWHarvestingStatus() && g_pHarvester->uIDWReportingPeriod > GetIDWReportingPeriod())
         {
-            CcspHarvesterTrace(("RDK_LOG_ERROR, Harvester %s : ReportingPeriod Validation Failed : New Reporting Period [%d] > Current Reporting Period [%d] \n", __FUNCTION__ , g_pHarvester->uIDWReportingPeriod, GetIDWReportingPeriod() ));
+            CcspHarvesterTrace(("RDK_LOG_ERROR, Harvester %s : ReportingPeriod Validation Failed : New Reporting Period [%lu] > Current Reporting Period [%lu] \n", __FUNCTION__ , g_pHarvester->uIDWReportingPeriod, GetIDWReportingPeriod() ));
             rc =  strcpy_s(pReturnParamName,*puLength, "ReportingPeriod");
             if(rc != EOK)
             {
@@ -1070,7 +1071,7 @@ RadioInterfaceStatistics_Default_SetParamUlongValue
     {
         g_pHarvester->bRISDefaultPollingPeriodChanged = true;
         g_pHarvester->uRISDefaultPollingPeriod = uValue;
-        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s : ParamName[%s] Value[%d] \n", __FUNCTION__ , ParamName, uValue ));
+        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s : ParamName[%s] Value[%lu] \n", __FUNCTION__ , ParamName, uValue ));
         return TRUE;
     }
 
@@ -1080,7 +1081,7 @@ RadioInterfaceStatistics_Default_SetParamUlongValue
     {
         g_pHarvester->bRISDefaultReportingPeriodChanged = true;
         g_pHarvester->uRISDefaultReportingPeriod = uValue;
-        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s : ParamName[%s] Value[%d] \n", __FUNCTION__ , ParamName, uValue ));
+        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s : ParamName[%s] Value[%lu] \n", __FUNCTION__ , ParamName, uValue ));
         return TRUE;
     }
 
@@ -1109,7 +1110,7 @@ RadioInterfaceStatistics_Default_GetParamUlongValue
     if((!ind) && (rc == EOK))
     {
         *puLong =  GetRISPollingPeriodDefault();
-        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s : ParamName[%s] Value[%d] \n", __FUNCTION__ , ParamName, *puLong ));
+        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s : ParamName[%s] Value[%lu] \n", __FUNCTION__ , ParamName, *puLong ));
         return TRUE;
     }
 
@@ -1118,7 +1119,7 @@ RadioInterfaceStatistics_Default_GetParamUlongValue
     if((!ind) && (rc == EOK))
     {
         *puLong =  GetRISReportingPeriodDefault();
-        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s : ParamName[%s] Value[%d] \n", __FUNCTION__ , ParamName, *puLong ));
+        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s : ParamName[%s] Value[%lu] \n", __FUNCTION__ , ParamName, *puLong ));
         return TRUE;
     }
 
@@ -1127,7 +1128,7 @@ RadioInterfaceStatistics_Default_GetParamUlongValue
     if((!ind) && (rc == EOK))
     {
         *puLong =  GetRISOverrideTTLDefault();
-        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s : ParamName[%s] Value[%d] \n", __FUNCTION__ , ParamName, *puLong ));
+        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s : ParamName[%s] Value[%lu] \n", __FUNCTION__ , ParamName, *puLong ));
         return TRUE;
     }
 
@@ -1156,7 +1157,7 @@ RadioInterfaceStatistics_GetParamUlongValue
     if((!ind) && (rc == EOK))
     {
         *puLong =  GetRISPollingPeriod();
-        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s : ParamName[%s] Value[%d] \n", __FUNCTION__ , ParamName, *puLong ));
+        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s : ParamName[%s] Value[%lu] \n", __FUNCTION__ , ParamName, *puLong ));
         return TRUE;
     }
 
@@ -1165,7 +1166,7 @@ RadioInterfaceStatistics_GetParamUlongValue
     if((!ind) && (rc == EOK))
     {
         *puLong =  GetRISReportingPeriod();
-        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s : ParamName[%s] Value[%d] \n", __FUNCTION__ , ParamName, *puLong ));
+        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s : ParamName[%s] Value[%lu] \n", __FUNCTION__ , ParamName, *puLong ));
         return TRUE;
     }
 
@@ -1195,7 +1196,7 @@ RadioInterfaceStatistics_SetParamUlongValue
     {
         g_pHarvester->bRISPollingPeriodChanged = true;
         g_pHarvester->uRISPollingPeriod = uValue;
-        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s : ParamName[%s] Value[%d] \n", __FUNCTION__ , ParamName, uValue ));
+        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s : ParamName[%s] Value[%lu] \n", __FUNCTION__ , ParamName, uValue ));
         return TRUE;
     }
 
@@ -1205,7 +1206,7 @@ RadioInterfaceStatistics_SetParamUlongValue
     {
         g_pHarvester->bRISReportingPeriodChanged = true;
         g_pHarvester->uRISReportingPeriod = uValue;
-        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s : ParamName[%s] Value[%d] \n", __FUNCTION__ , ParamName, uValue ));
+        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s : ParamName[%s] Value[%lu] \n", __FUNCTION__ , ParamName, uValue ));
         return TRUE;
     }
 
@@ -1247,7 +1248,7 @@ RadioInterfaceStatistics_GetParamStringValue
         }
         else
     {
-    CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Buffer Size [%d] InputSize [%d]\n", bufsize, *pUlSize));
+    CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Buffer Size [%d] InputSize [%lu]\n", bufsize, *pUlSize));
         if (bufsize < *pUlSize)
         {
             /*
@@ -1289,7 +1290,7 @@ RadioInterfaceStatistics_GetParamStringValue
         else
         {
 
-    CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Buffer Size [%d] InputSize [%d]\n", bufsize, *pUlSize));
+    CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Buffer Size [%d] InputSize [%lu]\n", bufsize, *pUlSize));
         if (bufsize < *pUlSize)
         {
             rc = strcpy_s(pValue,*pUlSize, GetRISSchemaIDBuffer());
@@ -1365,7 +1366,7 @@ RadioInterfaceStatistics_Validate
         BOOL validated = ValidateRISPeriod(g_pHarvester->uRISDefaultPollingPeriod);    
         if(!validated)
         {
-            CcspHarvesterTrace(("RDK_LOG_ERROR, Harvester %s : PollingPeriod Validation Failed : [%d] Value not Allowed \n", __FUNCTION__ , g_pHarvester->uRISDefaultPollingPeriod));
+            CcspHarvesterTrace(("RDK_LOG_ERROR, Harvester %s : PollingPeriod Validation Failed : [%lu] Value not Allowed \n", __FUNCTION__ , g_pHarvester->uRISDefaultPollingPeriod));
            rc =  strcpy_s(pReturnParamName, *puLength, "PollingPeriod");
            if(rc != EOK)
            {
@@ -1382,7 +1383,7 @@ RadioInterfaceStatistics_Validate
         BOOL validated = ValidateRISPeriod(g_pHarvester->uRISDefaultReportingPeriod);    
         if(!validated)
         {
-            CcspHarvesterTrace(("RDK_LOG_ERROR, Harvester %s : ReportingPeriod Validation Failed : [%d] Value not Allowed \n", __FUNCTION__ , g_pHarvester->uRISDefaultReportingPeriod));
+            CcspHarvesterTrace(("RDK_LOG_ERROR, Harvester %s : ReportingPeriod Validation Failed : [%lu] Value not Allowed \n", __FUNCTION__ , g_pHarvester->uRISDefaultReportingPeriod));
             rc =strcpy_s(pReturnParamName, *puLength, "ReportingPeriod");
              if(rc != EOK)
              {
@@ -1399,7 +1400,7 @@ RadioInterfaceStatistics_Validate
         BOOL validated = ValidateRISPeriod(g_pHarvester->uRISPollingPeriod);    
         if(!validated)
         {
-            CcspHarvesterTrace(("RDK_LOG_ERROR, Harvester %s : PollingPeriod Validation Failed : [%d] Value not Allowed \n", __FUNCTION__ , g_pHarvester->uRISPollingPeriod));
+            CcspHarvesterTrace(("RDK_LOG_ERROR, Harvester %s : PollingPeriod Validation Failed : [%lu] Value not Allowed \n", __FUNCTION__ , g_pHarvester->uRISPollingPeriod));
             rc =  strcpy_s(pReturnParamName,*puLength, "PollingPeriod");
             if(rc != EOK)
             {
@@ -1411,7 +1412,7 @@ RadioInterfaceStatistics_Validate
         }
         if(GetRISHarvestingStatus() && g_pHarvester->uRISPollingPeriod > GetRISPollingPeriod())
         {
-            CcspHarvesterTrace(("RDK_LOG_ERROR, Harvester %s : PollingPeriod Validation Failed : New Polling Period [%d] > Current Polling Period [%d] \n", __FUNCTION__ , g_pHarvester->uRISPollingPeriod, GetRISPollingPeriod() ));
+            CcspHarvesterTrace(("RDK_LOG_ERROR, Harvester %s : PollingPeriod Validation Failed : New Polling Period [%lu] > Current Polling Period [%lu] \n", __FUNCTION__ , g_pHarvester->uRISPollingPeriod, GetRISPollingPeriod() ));
             rc =  strcpy_s(pReturnParamName,*puLength, "PollingPeriod");
             if(rc != EOK)
             {
@@ -1426,7 +1427,7 @@ RadioInterfaceStatistics_Validate
 
         if(g_pHarvester->uRISPollingPeriod > period)
         {
-            CcspHarvesterTrace(("RDK_LOG_ERROR, Harvester %s : PollingPeriod Validation Failed : New Polling Period [%d] > Current Reporting Period [%d] \n", __FUNCTION__ , g_pHarvester->uRISPollingPeriod, period ));
+            CcspHarvesterTrace(("RDK_LOG_ERROR, Harvester %s : PollingPeriod Validation Failed : New Polling Period [%lu] > Current Reporting Period [%lu] \n", __FUNCTION__ , g_pHarvester->uRISPollingPeriod, period ));
             rc =  strcpy_s(pReturnParamName,*puLength, "PollingPeriod");
             if(rc != EOK)
             {
@@ -1443,7 +1444,7 @@ RadioInterfaceStatistics_Validate
         BOOL validated = ValidateRISPeriod(g_pHarvester->uRISReportingPeriod);    
         if(!validated)
         {
-            CcspHarvesterTrace(("RDK_LOG_ERROR, Harvester %s : ReportingPeriod Validation Failed : [%d] Value not Allowed \n", __FUNCTION__ , g_pHarvester->uRISReportingPeriod));
+            CcspHarvesterTrace(("RDK_LOG_ERROR, Harvester %s : ReportingPeriod Validation Failed : [%lu] Value not Allowed \n", __FUNCTION__ , g_pHarvester->uRISReportingPeriod));
             rc =strcpy_s(pReturnParamName,*puLength, "ReportingPeriod");
             if(rc != EOK)
             {
@@ -1458,7 +1459,7 @@ RadioInterfaceStatistics_Validate
 
         if(g_pHarvester->uRISReportingPeriod < period )
         {
-            CcspHarvesterTrace(("RDK_LOG_ERROR, Harvester %s : ReportingPeriod Validation Failed : New Reporting Period [%d] < Current Polling Period [%d] \n", __FUNCTION__ , g_pHarvester->uRISReportingPeriod, period ));
+          CcspHarvesterTrace(("RDK_LOG_ERROR, Harvester %s : ReportingPeriod Validation Failed : New Reporting Period [%lu] < Current Polling Period [%lu] \n", __FUNCTION__ , g_pHarvester->uRISReportingPeriod, period ));
             rc =strcpy_s(pReturnParamName,*puLength, "ReportingPeriod");
             if(rc != EOK)
             {
@@ -1470,7 +1471,7 @@ RadioInterfaceStatistics_Validate
         }
         if(GetRISHarvestingStatus() && g_pHarvester->uRISReportingPeriod > GetRISReportingPeriod())
         {
-            CcspHarvesterTrace(("RDK_LOG_ERROR, Harvester %s : ReportingPeriod Validation Failed : New Reporting Period [%d] > Current Reporting Period [%d] \n", __FUNCTION__ , g_pHarvester->uRISReportingPeriod, GetRISReportingPeriod() ));
+            CcspHarvesterTrace(("RDK_LOG_ERROR, Harvester %s : ReportingPeriod Validation Failed : New Reporting Period [%lu] > Current Reporting Period [%lu] \n", __FUNCTION__ , g_pHarvester->uRISReportingPeriod, GetRISReportingPeriod() ));
             rc =strcpy_s(pReturnParamName,*puLength, "ReportingPeriod");
             if(rc != EOK)
             {
@@ -1737,7 +1738,7 @@ NeighboringAP_Default_SetParamUlongValue
     {
         g_pHarvester->bNAPDefaultPollingPeriodChanged = true;
         g_pHarvester->uNAPDefaultPollingPeriod = uValue;
-        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s : ParamName[%s] Value[%d] \n", __FUNCTION__ , ParamName, uValue ));
+        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s : ParamName[%s] Value[%lu] \n", __FUNCTION__ , ParamName, uValue ));
         return TRUE;
     }
 
@@ -1747,7 +1748,7 @@ NeighboringAP_Default_SetParamUlongValue
     {
         g_pHarvester->bNAPDefaultReportingPeriodChanged = true;
         g_pHarvester->uNAPDefaultReportingPeriod = uValue;
-        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s : ParamName[%s] Value[%d] \n", __FUNCTION__ , ParamName, uValue ));
+        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s : ParamName[%s] Value[%lu] \n", __FUNCTION__ , ParamName, uValue ));
         return TRUE;
     }
 
@@ -1776,7 +1777,7 @@ NeighboringAP_Default_GetParamUlongValue
     if((!ind) && (rc == EOK))
     {
         *puLong =  GetNAPPollingPeriodDefault();
-        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s : ParamName[%s] Value[%d] \n", __FUNCTION__ , ParamName, *puLong ));
+        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s : ParamName[%s] Value[%lu] \n", __FUNCTION__ , ParamName, *puLong ));
         return TRUE;
     }
 
@@ -1785,7 +1786,7 @@ NeighboringAP_Default_GetParamUlongValue
     if((!ind) && (rc == EOK))
     {
         *puLong =  GetNAPReportingPeriodDefault();
-        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s : ParamName[%s] Value[%d] \n", __FUNCTION__ , ParamName, *puLong ));
+        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s : ParamName[%s] Value[%lu] \n", __FUNCTION__ , ParamName, *puLong ));
         return TRUE;
     }
 
@@ -1794,7 +1795,7 @@ NeighboringAP_Default_GetParamUlongValue
     if((!ind) && (rc == EOK))
     {
         *puLong =  GetNAPOverrideTTLDefault();
-        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s : ParamName[%s] Value[%d] \n", __FUNCTION__ , ParamName, *puLong ));
+        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s : ParamName[%s] Value[%lu] \n", __FUNCTION__ , ParamName, *puLong ));
         return TRUE;
     }
 
@@ -1823,7 +1824,7 @@ NeighboringAP_GetParamUlongValue
     if((!ind) && (rc == EOK))
     {
         *puLong =  GetNAPPollingPeriod();
-        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s : ParamName[%s] Value[%d] \n", __FUNCTION__ , ParamName, *puLong ));
+        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s : ParamName[%s] Value[%lu] \n", __FUNCTION__ , ParamName, *puLong ));
         return TRUE;
     }
 
@@ -1832,7 +1833,7 @@ NeighboringAP_GetParamUlongValue
     if((!ind) && (rc == EOK))
     {
         *puLong =  GetNAPReportingPeriod();
-        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s : ParamName[%s] Value[%d] \n", __FUNCTION__ , ParamName, *puLong ));
+        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s : ParamName[%s] Value[%lu] \n", __FUNCTION__ , ParamName, *puLong ));
         return TRUE;
     }
 
@@ -1862,7 +1863,7 @@ NeighboringAP_SetParamUlongValue
     {
         g_pHarvester->bNAPPollingPeriodChanged = true;
         g_pHarvester->uNAPPollingPeriod = uValue;
-        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s : ParamName[%s] Value[%d] \n", __FUNCTION__ , ParamName, uValue ));
+        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s : ParamName[%s] Value[%lu] \n", __FUNCTION__ , ParamName, uValue ));
         return TRUE;
     }
 
@@ -1872,7 +1873,7 @@ NeighboringAP_SetParamUlongValue
     {
         g_pHarvester->bNAPReportingPeriodChanged = true;
         g_pHarvester->uNAPReportingPeriod = uValue;
-        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s : ParamName[%s] Value[%d] \n", __FUNCTION__ , ParamName, uValue ));
+        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s : ParamName[%s] Value[%lu] \n", __FUNCTION__ , ParamName, uValue ));
         return TRUE;
     }
 
@@ -1914,7 +1915,7 @@ NeighboringAP_GetParamStringValue
         }
         else
         {
-        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Buffer Size [%d] InputSize [%d]\n", bufsize, *pUlSize));
+        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Buffer Size [%d] InputSize [%lu]\n", bufsize, *pUlSize));
             if (bufsize < *pUlSize)
             {
                 /*
@@ -1956,7 +1957,7 @@ NeighboringAP_GetParamStringValue
         else
         {
 
-        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Buffer Size [%d] InputSize [%d]\n", bufsize, *pUlSize));
+        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Buffer Size [%d] InputSize [%lu]\n", bufsize, *pUlSize));
 
             if (bufsize < *pUlSize)
             {
@@ -2089,14 +2090,14 @@ NeighboringAP_Validate
         BOOL validated = ValidateNAPPeriod(g_pHarvester->uNAPDefaultPollingPeriod);    
         if(!validated)
         {
-            CcspHarvesterTrace(("RDK_LOG_ERROR, Harvester %s : PollingPeriod Validation Failed : [%d] Value not Allowed \n", __FUNCTION__ , g_pHarvester->uNAPDefaultPollingPeriod));
+            CcspHarvesterTrace(("RDK_LOG_ERROR, Harvester %s : PollingPeriod Validation Failed : [%lu] Value not Allowed \n", __FUNCTION__ , g_pHarvester->uNAPDefaultPollingPeriod));
             rc =  strcpy_s(pReturnParamName,*puLength, "PollingPeriod");
             if(rc != EOK)
             {
               ERR_CHK(rc);
               return FALSE;
             }
-            *puLength = AnscSizeOfString("PollingPeriod");
+           *puLength = AnscSizeOfString("PollingPeriod");
             return FALSE;
         }
     }
@@ -2106,14 +2107,14 @@ NeighboringAP_Validate
         BOOL validated = ValidateNAPPeriod(g_pHarvester->uNAPDefaultReportingPeriod);    
         if(!validated)
         {
-            CcspHarvesterTrace(("RDK_LOG_ERROR, Harvester %s : ReportingPeriod Validation Failed : [%d] Value not Allowed \n", __FUNCTION__ , g_pHarvester->uNAPDefaultReportingPeriod));
+            CcspHarvesterTrace(("RDK_LOG_ERROR, Harvester %s : ReportingPeriod Validation Failed : [%lu] Value not Allowed \n", __FUNCTION__ , g_pHarvester->uNAPDefaultReportingPeriod));
             rc =  strcpy_s(pReturnParamName,*puLength, "ReportingPeriod");
             if(rc != EOK)
             {
               ERR_CHK(rc);
               return FALSE;
             }
-            *puLength = AnscSizeOfString("ReportingPeriod");
+           *puLength = AnscSizeOfString("ReportingPeriod");
             return FALSE;
         }
     }
@@ -2123,7 +2124,7 @@ NeighboringAP_Validate
         BOOL validated = ValidateNAPPeriod(g_pHarvester->uNAPPollingPeriod);    
         if(!validated)
         {
-            CcspHarvesterTrace(("RDK_LOG_ERROR, Harvester %s : PollingPeriod Validation Failed : [%d] Value not Allowed \n", __FUNCTION__ , g_pHarvester->uNAPPollingPeriod));
+            CcspHarvesterTrace(("RDK_LOG_ERROR, Harvester %s : PollingPeriod Validation Failed : [%lu] Value not Allowed \n", __FUNCTION__ , g_pHarvester->uNAPPollingPeriod));
             rc =  strcpy_s(pReturnParamName,*puLength, "PollingPeriod");
             if(rc != EOK)
             {
@@ -2135,7 +2136,7 @@ NeighboringAP_Validate
         }
         if(GetNAPHarvestingStatus() && g_pHarvester->uNAPPollingPeriod > GetNAPPollingPeriod())
         {
-            CcspHarvesterTrace(("RDK_LOG_ERROR, Harvester %s : PollingPeriod Validation Failed : New Polling Period [%d] > Current Polling Period [%d] \n", __FUNCTION__ , g_pHarvester->uNAPPollingPeriod, GetNAPPollingPeriod() ));
+            CcspHarvesterTrace(("RDK_LOG_ERROR, Harvester %s : PollingPeriod Validation Failed : New Polling Period [%lu] > Current Polling Period [%lu] \n", __FUNCTION__ , g_pHarvester->uNAPPollingPeriod, GetNAPPollingPeriod() ));
             rc =  strcpy_s(pReturnParamName,*puLength, "PollingPeriod");
             if(rc != EOK)
             {
@@ -2150,7 +2151,7 @@ NeighboringAP_Validate
 
         if(g_pHarvester->uNAPPollingPeriod > period )
         {
-            CcspHarvesterTrace(("RDK_LOG_ERROR, Harvester %s : PollingPeriod Validation Failed : New Polling Period [%d] > Current Reporting Period [%d] \n", __FUNCTION__ , g_pHarvester->uNAPPollingPeriod, period ));
+            CcspHarvesterTrace(("RDK_LOG_ERROR, Harvester %s : PollingPeriod Validation Failed : New Polling Period [%lu] > Current Reporting Period [%lu] \n", __FUNCTION__ , g_pHarvester->uNAPPollingPeriod, period ));
             rc =  strcpy_s(pReturnParamName,*puLength, "PollingPeriod");
             if(rc != EOK)
             {
@@ -2167,7 +2168,7 @@ NeighboringAP_Validate
         BOOL validated = ValidateNAPPeriod(g_pHarvester->uNAPReportingPeriod);    
         if(!validated)
         {
-            CcspHarvesterTrace(("RDK_LOG_ERROR, Harvester %s : ReportingPeriod Validation Failed : [%d] Value not Allowed \n", __FUNCTION__ , g_pHarvester->uNAPReportingPeriod));
+            CcspHarvesterTrace(("RDK_LOG_ERROR, Harvester %s : ReportingPeriod Validation Failed : [%lu] Value not Allowed \n", __FUNCTION__ , g_pHarvester->uNAPReportingPeriod));
             rc =  strcpy_s(pReturnParamName,*puLength, "ReportingPeriod");
             if(rc != EOK)
             { 
@@ -2182,7 +2183,7 @@ NeighboringAP_Validate
 
         if(g_pHarvester->uNAPReportingPeriod < period )
         {
-            CcspHarvesterTrace(("RDK_LOG_ERROR, Harvester %s : ReportingPeriod Validation Failed : New Reporting Period [%d] < Current Polling Period [%d] \n", __FUNCTION__ , g_pHarvester->uNAPReportingPeriod, period ));
+           CcspHarvesterTrace(("RDK_LOG_ERROR, Harvester %s : ReportingPeriod Validation Failed : New Reporting Period [%lu] < Current Polling Period [%lu] \n", __FUNCTION__ , g_pHarvester->uNAPReportingPeriod, period ));
             rc =  strcpy_s(pReturnParamName,*puLength, "ReportingPeriod");
             if(rc != EOK)
             {
@@ -2194,7 +2195,7 @@ NeighboringAP_Validate
         }
         if(GetNAPHarvestingStatus() && g_pHarvester->uNAPReportingPeriod > GetNAPReportingPeriod())
         {
-            CcspHarvesterTrace(("RDK_LOG_ERROR, Harvester %s : ReportingPeriod Validation Failed : New Reporting Period [%d] > Current Reporting Period [%d] \n", __FUNCTION__ , g_pHarvester->uNAPReportingPeriod, GetNAPReportingPeriod() ));
+            CcspHarvesterTrace(("RDK_LOG_ERROR, Harvester %s : ReportingPeriod Validation Failed : New Reporting Period [%lu] > Current Reporting Period [%lu] \n", __FUNCTION__ , g_pHarvester->uNAPReportingPeriod, GetNAPReportingPeriod() ));
             rc =  strcpy_s(pReturnParamName,*puLength, "ReportingPeriod");
             if(rc != EOK)
             {

@@ -128,4 +128,6 @@ ULONG GetIDWOverrideTTLDefault();
  */
 BOOL ValidateIDWPeriod(ULONG interval);
 
+BOOL isvalueinarray(ULONG val, ULONG *arr, int size);
+
 #endif 

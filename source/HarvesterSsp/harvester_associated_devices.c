@@ -345,7 +345,7 @@ int _syscmd(char *cmd, char *retBuf, int retBufSize)
     return 0;
 }
 
-#ifndef UTC_ENABLE_ATOM
+#if !defined(UTC_ENABLE_ATOM) && !defined(_HUB4_PRODUCT_REQ_)
 int getTimeOffsetFromUtc()
 {
     static int tm_offset = 0;
@@ -407,7 +407,7 @@ void add_to_list(struct associateddevicedata **headnode, char* ssid, ULONG devic
         ptr->radioChannel = channel;
         ptr->next = NULL;
         gettimeofday(&(ptr->timestamp), NULL);
-#ifndef UTC_ENABLE_ATOM
+#if !defined(UTC_ENABLE_ATOM) && !defined(_HUB4_PRODUCT_REQ_)
         ptr->timestamp.tv_sec -= getTimeOffsetFromUtc();
 #endif
         if (*headnode == NULL)

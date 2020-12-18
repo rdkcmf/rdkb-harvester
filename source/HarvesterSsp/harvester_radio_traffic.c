@@ -66,7 +66,7 @@ void delete_rt_list();
 int GetRadioTrafficData(int radioIndex);
 extern void rt_avro_cleanup();
 extern ulong GetCurrentTimeInSecond();
-#ifndef UTC_ENABLE_ATOM
+#if !defined(UTC_ENABLE_ATOM) && !defined(_HUB4_PRODUCT_REQ_)
 extern int getTimeOffsetFromUtc();
 #endif
 
@@ -381,7 +381,7 @@ int add_to_rt_list(int radioIndex, BOOL enabled, char* freqband, ULONG channel, 
         ptr->radioChannel = channel;
         ptr->next = NULL;
         gettimeofday(&(ptr->timestamp), NULL);
-#ifndef UTC_ENABLE_ATOM
+#if !defined(UTC_ENABLE_ATOM) && !defined(_HUB4_PRODUCT_REQ_)	
         ptr->timestamp.tv_sec -= getTimeOffsetFromUtc();
 #endif
 

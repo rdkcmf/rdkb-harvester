@@ -46,7 +46,7 @@ void print_nap_ondemand_list();
 void delete_nap_ondemand_list();
 int GetRadioNeighboringAPOnDemandData(int radioIndex, char* radioIfName);
 
-#ifndef UTC_ENABLE_ATOM
+#if !defined(UTC_ENABLE_ATOM) && !defined(_HUB4_PRODUCT_REQ_)
 extern int getTimeOffsetFromUtc();
 #endif
 
@@ -144,7 +144,7 @@ void add_to_nap_ondemand_list(char* radioIfName, ULONG numAPs, wifi_neighbor_ap2
 
         ptr->next = NULL;
         gettimeofday(&(ptr->timestamp), NULL);
-#ifndef UTC_ENABLE_ATOM
+#if !defined(UTC_ENABLE_ATOM) && !defined(_HUB4_PRODUCT_REQ_)	
         ptr->timestamp.tv_sec -= getTimeOffsetFromUtc();
 #endif
 

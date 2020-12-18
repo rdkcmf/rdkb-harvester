@@ -58,7 +58,7 @@ int cpe_parent_exists = FALSE;
 
 /**** temperatory raw data ****/
 
-#ifndef UTC_ENABLE_ATOM
+#if !defined(UTC_ENABLE_ATOM) && !defined(_HUB4_PRODUCT_REQ_)
 extern int getTimeOffsetFromUtc();
 #endif
 
@@ -256,7 +256,7 @@ void harvester_report_associateddevices(struct associateddevicedata *head, char*
   struct timeval ts;
   gettimeofday(&ts, NULL);
 
-#ifndef UTC_ENABLE_ATOM
+#if !defined(UTC_ENABLE_ATOM) && !defined(_HUB4_PRODUCT_REQ_)
   int64_t tstamp_av_main = ((int64_t) (ts.tv_sec - getTimeOffsetFromUtc()) * 1000000) + (int64_t) ts.tv_usec;
 #else
   int64_t tstamp_av_main = ((int64_t) (ts.tv_sec) * 1000000) + (int64_t) ts.tv_usec;

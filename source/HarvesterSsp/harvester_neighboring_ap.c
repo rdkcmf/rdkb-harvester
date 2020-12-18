@@ -55,7 +55,7 @@ ULONG NeighboringAPPeriods[8] = {300,900,1800,3600,10800,21600,43200,86400};
 
 BOOL isvalueinNAParray(ULONG val, ULONG *arr, int size);
 
-#ifndef UTC_ENABLE_ATOM
+#if !defined(UTC_ENABLE_ATOM) && !defined(_HUB4_PRODUCT_REQ_)
 extern int getTimeOffsetFromUtc();
 #endif
 
@@ -332,7 +332,7 @@ void add_to_nap_list(char* radioIfName, ULONG numAPs, wifi_neighbor_ap2_t* neigh
 
         ptr->next = NULL;
         gettimeofday(&(ptr->timestamp), NULL);
-#ifndef UTC_ENABLE_ATOM
+#if !defined(UTC_ENABLE_ATOM) && !defined(_HUB4_PRODUCT_REQ_)	
         ptr->timestamp.tv_sec -= getTimeOffsetFromUtc();
 #endif
 

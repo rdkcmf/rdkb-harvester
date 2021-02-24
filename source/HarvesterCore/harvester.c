@@ -20,6 +20,9 @@
 #include <stdio.h>
 #include "ansc_platform.h"
 #include "harvester.h"
+#if defined(_INTEL_WAV_)
+#include "wifi_hal.h"
+#endif
 
 int consoleDebugEnable = 0;
 FILE* debugLogFile;
@@ -60,6 +63,25 @@ int main(int argc, char* argv[])
     msgBusInit(HARVESTER_COMPONENT_NAME);
        
     fprintf(stderr, "RDK_LOG_DEBUG, Registered Harvester component '%s' with CR ..\n", HARVESTER_COMPONENT_NAME);
+#if defined(_INTEL_WAV_)
+    ULONG output = 0;
+    int ret =  wifi_getRadioNumberOfEntries(&output);
+    if(!ret && output > 0)
+    {
+        for (int k = 0; k < output; k++)
+        {
+            ret = wifi_hostapNlConnect(k);
+            if (ret)
+            {
+                fprintf(stderr, "RDK_LOG_ERROR, wifi_hostapNlConnect(%d) Error returned [%d] \n", k, ret);
+            }
+        }
+    }
+    else
+    {
+        fprintf(stderr, "RDK_LOG_WARN, wifi_getRadioNumberOfEntries Error [%d] or No radios detected [%ld] \n", ret, output);
+    }
+#endif
     initparodusTask();
     while(1)
     {

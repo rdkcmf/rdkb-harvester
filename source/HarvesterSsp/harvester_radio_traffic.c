@@ -35,6 +35,7 @@
 #include "report_common.h"
 #include "safec_lib_common.h"
 #include "harvester_associated_devices.h"
+#include "secure_wrapper.h"
 
 ULONG RISReportingPeriodDefault = DEFAULT_POLLING_INTERVAL;
 ULONG RISPollingPeriodDefault = DEFAULT_REPORTING_INTERVAL;
@@ -58,7 +59,7 @@ ULONG RadioTrafficPeriods[13] = {1,5,15,30,60,300,900,1800,3600,10800,21600,4320
 BOOL isvalueinRISarray(ULONG val, ULONG *arr, int size);
 
 void* StartRadioTrafficHarvesting( void *arg );
-int _rtsyscmd(char *cmd, char *retBuf, int retBufSize);
+void _rtsyscmd(FILE *f, char *retBuf, int retBufSize);
 int setRISCurrentTimeFromDmCli();
 int add_to_rt_list(int radioIndex, BOOL enabled, char* freqband, ULONG channel, char* opchanbw, wifi_radioTrafficStats2_t* radiotrafficdata);
 void print_rt_list();
@@ -276,18 +277,12 @@ ULONG GetRISOverrideTTLDefault()
     return RISOverrideTTLDefault;
 }
 
-int _rtsyscmd(char *cmd, char *retBuf, int retBufSize)
+void _rtsyscmd(FILE *f, char *retBuf, int retBufSize)
 {
     CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s ENTER\n", __FUNCTION__ ));
 
-    FILE *f;
     char *ptr = retBuf;
     int bufSize = retBufSize, bufbytes = 0, readbytes = 0;
-
-    if ((f = popen(cmd, "r")) == NULL) {
-        CcspHarvesterTrace(("RDK_LOG_DEBUG, Harvester %s : popen %s error\n",__FUNCTION__, cmd));
-        return -1;
-    }
 
     while (!feof(f))
     {
@@ -306,19 +301,16 @@ int _rtsyscmd(char *cmd, char *retBuf, int retBufSize)
         bufSize -= readbytes;
         ptr += readbytes;
     }
-    pclose(f);
+
     retBuf[retBufSize - 1] = 0;
 
     CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s EXIT\n", __FUNCTION__ ));
-
-    return 0;
 }
 
 int getRadioBssid(int radioIndex, char* radio_BSSID)
 {
-    char datecmd[128] = {0};
     int ret = 0;
-    errno_t rc = -1;
+    FILE *f = NULL;
     CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s ENTER\n", __FUNCTION__ ));
 
     if(strlen(radio_BSSID) == 0)
@@ -331,17 +323,17 @@ int getRadioBssid(int radioIndex, char* radio_BSSID)
         }
         else
         {
-            rc = sprintf_s(datecmd,sizeof(datecmd),"ifconfig -a %s | grep HWaddr | awk '{print $5}' | cut -c -17", radioIfName);
-            if(rc < EOK)
+            f = v_secure_popen("r","ifconfig -a %s | grep HWaddr | awk '{print $5}' | cut -c -17", radioIfName);
+            if(f == NULL)
             {
-              ERR_CHK(rc);
-              return -1;
-            }
-            ret = _rtsyscmd(datecmd, radio_BSSID, 19);
-            if(ret)
+                CcspHarvesterTrace(("RDK_LOG_ERROR, Harvester %s : Error opening popen pipe ! \n",__FUNCTION__));
+                return -1;
+            }           
+	    _rtsyscmd(f, radio_BSSID, 19);
+            ret = v_secure_pclose(f);
+            if(ret != 0)
             {
-                CcspHarvesterTrace(("RDK_LOG_ERROR, Harvester %s : Executing Syscmd for DMCLI CurrentLocalTime Date [%d] \n",__FUNCTION__ , ret));
-                return ret;
+                CcspHarvesterTrace(("RDK_LOG_ERROR, Harvester %s : Error closing command pipe! ret : [%d] \n",__FUNCTION__ , ret));
             }
         }
     }
@@ -352,7 +344,7 @@ int getRadioBssid(int radioIndex, char* radio_BSSID)
 
     CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s EXIT\n", __FUNCTION__ ));
 
-    return ret;
+    return ret;                      
 
 }
 

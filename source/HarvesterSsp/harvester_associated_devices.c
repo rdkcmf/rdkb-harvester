@@ -35,7 +35,7 @@
 #include "ccsp_harvesterLog_wrapper.h"
 #include "report_common.h"
 #include "safec_lib_common.h"
-
+#include "secure_wrapper.h"
 
 #define PUBLIC  0
 #define PRIVATE 1
@@ -66,7 +66,9 @@ ULONG IDWOverrideTTL = TTL_INTERVAL;
 ULONG IDWOverrideTTLDefault = DEFAULT_TTL_INTERVAL;
 
 void* StartAssociatedDeviceHarvesting( void *arg );
-int _syscmd(char *cmd, char *retBuf, int retBufSize);
+#if !defined(UTC_ENABLE_ATOM) && !defined(_HUB4_PRODUCT_REQ_)
+static void _syscmd(FILE *f, char *retBuf, int retBufSize);
+#endif
 void add_to_list(struct associateddevicedata **headnode, char* ssid, ULONG devices, wifi_associated_dev_t* devicedata, char* freqband, ULONG channel, char* intfcmacid);
 void print_list( struct associateddevicedata *head );
 void delete_list( struct associateddevicedata *head );
@@ -303,18 +305,13 @@ ULONG GetIDWOverrideTTLDefault()
     return IDWOverrideTTLDefault;
 }
 
-int _syscmd(char *cmd, char *retBuf, int retBufSize)
+#if !defined(UTC_ENABLE_ATOM) && !defined(_HUB4_PRODUCT_REQ_)
+static void _syscmd(FILE *f, char *retBuf, int retBufSize)
 {
     CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s ENTER\n", __FUNCTION__ ));
 
-    FILE *f;
     char *ptr = retBuf;
     int bufSize = retBufSize, bufbytes = 0, readbytes = 0;
-
-    if ((f = popen(cmd, "r")) == NULL) {
-        CcspHarvesterTrace(("RDK_LOG_DEBUG, Harvester %s : popen %s error\n",__FUNCTION__, cmd));
-        return -1;
-    }
 
     while (!feof(f))
     {
@@ -333,20 +330,18 @@ int _syscmd(char *cmd, char *retBuf, int retBufSize)
         bufSize -= readbytes;
         ptr += readbytes;
     }
-    pclose(f);
+
     retBuf[retBufSize - 1] = 0;
 
     CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s EXIT\n", __FUNCTION__ ));
-
-    return 0;
 }
 
-#if !defined(UTC_ENABLE_ATOM) && !defined(_HUB4_PRODUCT_REQ_)
 int getTimeOffsetFromUtc()
 {
+    FILE *f = NULL;
     static int tm_offset = 0;
+    int ret = 0;
     static bool offset_available = false;
-    errno_t                         rc       = -1;
 
     if(offset_available)
     {
@@ -355,23 +350,23 @@ int getTimeOffsetFromUtc()
     else
     {
         CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s ENTER\n", __FUNCTION__ ));
-        char timezonecmd[128] = {0};
         char timezonearr[32] = {0};
-        int ret  = 0;
+        
 
-        rc = sprintf_s(timezonecmd,sizeof(timezonecmd), "dmcli eRT getv Device.Time.TimeOffset | grep value | awk '{print $5}'");
-        if(rc < EOK)
+        f = v_secure_popen("r", "dmcli eRT getv Device.Time.TimeOffset | grep value | awk '{print $5}'");
+        if(f == NULL)
         {
-          ERR_CHK(rc);
-          return -1;
+            CcspHarvesterTrace(("RDK_LOG_ERROR, Harvester %s : Error opening pipe! \n",__FUNCTION__));
+            return -1;
         }
-        ret = _syscmd(timezonecmd, timezonearr, sizeof(timezonearr));
-        if(ret)
+      
+        _syscmd(f, timezonearr, sizeof(timezonearr));
+        ret = v_secure_pclose(f);
+        if(ret != 0)
         {
-            CcspHarvesterTrace(("RDK_LOG_ERROR, Harvester %s : Executing Syscmd for DMCLI TimeOffset [%d] \n",__FUNCTION__, ret));
-            return ret;
+            CcspHarvesterTrace(("RDK_LOG_ERROR, Harvester %s : Error in closing command pipe! [%d] \n",__FUNCTION__, ret));
         }
-
+      
         if (sscanf(timezonearr, "%d", &tm_offset) != 1)
         {
             CcspHarvesterTrace(("RDK_LOG_ERROR, Harvester %s : Parsing Error for TimeOffset \n", __FUNCTION__ ));
@@ -382,7 +377,6 @@ int getTimeOffsetFromUtc()
         offset_available = true;
         return tm_offset;
     }
-
 }
 #endif
 

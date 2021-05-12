@@ -41,11 +41,11 @@
 
 #define NUM_OF_RADIO_OPERATING_CHANNEL_BANDWIDTHS (sizeof(radio_operating_channel_bandwidth_table)/sizeof(radio_operating_channel_bandwidth_table[0]))
 
-// HASH - 9f4adeb1b38d97025d723221be1cbdcf
+// HASH - 44b72f483a79e851ad61073dd5373535
 // UUID - 4d1f3d40-ab59-4672-89e6-c8cfdca739a0
 
-uint8_t RT_HASH[16] = {0x9f, 0x4a, 0xde, 0xb1, 0xb3, 0x8d, 0x97, 0x02,
-                       0x5d, 0x72, 0x32, 0x21, 0xbe, 0x1c, 0xbd, 0xcf
+uint8_t RT_HASH[16] = {0x44, 0xb7, 0x2f, 0x48, 0x3a, 0x79, 0xe8, 0x51,
+                       0xad, 0x61, 0x07, 0x3d, 0xd5, 0x37, 0x35, 0x35
                         };
 
 uint8_t RT_UUID[16] = {0x4d, 0x1f, 0x3d, 0x40, 0xab, 0x59, 0x46, 0x72,
@@ -72,7 +72,7 @@ extern ULONG GetRTPollingInterval();
 static char *macStr = NULL;
 static char CpemacStr[ 32 ];
 
-char *ris_schemaidbuffer = "4d1f3d40-ab59-4672-89e6-c8cfdca739a0/9f4adeb1b38d97025d723221be1cbdcf";
+char *ris_schemaidbuffer = "4d1f3d40-ab59-4672-89e6-c8cfdca739a0/44b72f483a79e851ad61073dd5373535";
 static   avro_value_iface_t  *iface = NULL;
 char *rt_schema_buffer;
 BOOL rt_schema_file_parsed = FALSE;
@@ -277,6 +277,9 @@ void harvester_report_radiotraffic(struct radiotrafficdata *ptr)
   char trans_id[37];
   size_t strsize2_4GHZ = 0;
   size_t strsize5GHZ = 0;
+#ifdef WIFI_HAL_VERSION_3
+  size_t strsize6GHZ = 0;
+#endif
   int rc = -1;
   int ind = -1;
   enum channel_bandwidth_e  type;
@@ -466,6 +469,9 @@ void harvester_report_radiotraffic(struct radiotrafficdata *ptr)
   
   strsize2_4GHZ = strlen("2.4GHz");
   strsize5GHZ = strlen("5GHz");
+#ifdef WIFI_HAL_VERSION_3
+  strsize6GHZ = strlen("6GHz");
+#endif
 
     rc = wifi_getRadioNumberOfEntries(&numElements);
     CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, wifi_getRadioNumberOfEntries() ret value %d\n", rc));
@@ -573,11 +579,29 @@ void harvester_report_radiotraffic(struct radiotrafficdata *ptr)
             CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, frequency_band = \"%s\"\n", "5GHz, set to _5GHz" ));
             avro_value_set_enum(&optional, avro_schema_enum_get_by_name(avro_value_get_schema(&optional), "_5GHz" ));
          }
+#ifndef WIFI_HAL_VERSION_3
          else
          {
             CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, frequency_band = \"%s\"\n", ptr->radioOperatingFrequencyBand ));
             avro_value_set_enum(&optional, avro_schema_enum_get_by_name(avro_value_get_schema(&optional), ptr->radioOperatingFrequencyBand));
          }
+#else
+         else
+         {
+            rc = strcmp_s("6GHz", strsize6GHZ, ptr->radioOperatingFrequencyBand, &ind);
+            ERR_CHK(rc);
+            if((rc == EOK) && (!ind))
+            {
+               CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, frequency_band = \"%s\"\n", "6GHz, set to _6GHz" ));
+               avro_value_set_enum(&optional, avro_schema_enum_get_by_name(avro_value_get_schema(&optional), "_6GHz" ));
+            }
+            else
+            {
+               CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, frequency_band = \"%s\"\n", ptr->radioOperatingFrequencyBand ));
+               avro_value_set_enum(&optional, avro_schema_enum_get_by_name(avro_value_get_schema(&optional), ptr->radioOperatingFrequencyBand));
+            }
+         }
+#endif
       }
 
       if ( CHK_AVRO_ERR ) CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, %s\n", avro_strerror()));

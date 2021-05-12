@@ -147,7 +147,8 @@
                   "namespace": "com.comcast.kestrel.odp.datatype",
                   "symbols": [
                     "_2_4GHz",
-                    "_5GHz"
+                    "_5GHz",
+                    "_6GHz"
                   ],
                   "type": "enum"
                 }

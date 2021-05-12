@@ -38,10 +38,10 @@
 #define WRITER_BUF_SIZE  (1024 * 150) // 150K
 
 //      "schemaTypeUUID" : "e375b355-988b-45f8-9ec9-feb4b53ed843",
-//      "schemaMD5Hash" : "602cb2158e43498e5d4ad1da22b71f04",
+//      "schemaMD5Hash" : "4ae36536e6cbf4e4a0d5d873d0668bfb",
 
-uint8_t NAP_HASH[16] = {0x60, 0x2c, 0xb2, 0x15, 0x8e, 0x43, 0x49, 0x8e,
-                        0x5d, 0x4a, 0xd1, 0xda, 0x22, 0xb7, 0x1f, 0x04
+uint8_t NAP_HASH[16] = {0x4a, 0xe3, 0x65, 0x36, 0xe6, 0xcb, 0xf4, 0xe4,
+                        0xa0, 0xd5, 0xd8, 0x73, 0xd0, 0x66, 0x8b, 0xfb
                         };
 
 uint8_t NAP_UUID[16] = {0xe3, 0x75, 0xb3, 0x55, 0x98, 0x8b, 0x45, 0xf8,
@@ -58,7 +58,7 @@ static char CpemacStr[ 32 ];
 
 
 char *nap_schema_buffer;
-char *nap_schemaidbuffer = "e375b355-988b-45f8-9ec9-feb4b53ed843/602cb2158e43498e5d4ad1da22b71f04";
+char *nap_schemaidbuffer = "e375b355-988b-45f8-9ec9-feb4b53ed843/4ae36536e6cbf4e4a0d5d873d0668bfb";
 static   avro_value_iface_t  *iface = NULL;
 BOOL nap_schema_file_parsed = FALSE;
 size_t AvroNAPSerializedSize;

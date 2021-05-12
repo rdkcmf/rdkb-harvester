@@ -37,11 +37,11 @@
 #define SCHEMA_ID_LENGTH  32
 #define WRITER_BUF_SIZE   1024 * 30 // 30K
 
-// HASH - 7985cdc3a29f21c283fdcc0fcdcce550
+// HASH - a0fe2a90307541ad0b03411f52ccfd07
 // UUID - ec57a5b6-b167-4623-baff-399f063bd56a
 
-uint8_t HASH[16] = {0x79, 0x85, 0xcd, 0xc3, 0xa2, 0x9f, 0x21, 0xc2,
-                    0x83, 0xfd, 0xcc, 0x0f, 0xcd, 0xcc, 0xe5, 0x50
+uint8_t HASH[16] = {0xa0, 0xfe, 0x2a, 0x90, 0x30, 0x75, 0x41, 0xad,
+                    0x0b, 0x03, 0x41, 0x1f, 0x52, 0xcc, 0xfd, 0x07
                    };
 
 uint8_t UUID[16] = {0xec, 0x57, 0xa5, 0xb6, 0xb1, 0x67, 0x46, 0x23,
@@ -67,7 +67,7 @@ extern int getTimeOffsetFromUtc();
 static char *macStr = NULL;
 static char CpemacStr[ 32 ];
 char *buffer = NULL;
-char *idw_schemaidbuffer = "ec57a5b6-b167-4623-baff-399f063bd56a/7985cdc3a29f21c283fdcc0fcdcce550";
+char *idw_schemaidbuffer = "ec57a5b6-b167-4623-baff-399f063bd56a/a0fe2a90307541ad0b03411f52ccfd07";
 static avro_value_iface_t  *iface = NULL;
 BOOL schema_file_parsed = FALSE;
 size_t AvroSerializedSize;
@@ -235,6 +235,9 @@ void harvester_report_associateddevices(struct associateddevicedata *head, char*
   int ind = -1;
   size_t strsize2_4GHZ = 0;
   size_t strsize5GHZ = 0;
+#ifdef WIFI_HAL_VERSION_3
+  size_t strsize6GHZ = 0;
+#endif
 
   CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s : ENTER \n", __FUNCTION__ ));
 
@@ -433,6 +436,9 @@ void harvester_report_associateddevices(struct associateddevicedata *head, char*
 
   strsize2_4GHZ = strlen("2.4GHz");
   strsize5GHZ = strlen("5GHz");
+#ifdef WIFI_HAL_VERSION_3
+  strsize6GHZ = strlen("6GHz");
+#endif
 
   for (i = 0; i < numElements; i++)
   {
@@ -604,11 +610,29 @@ void harvester_report_associateddevices(struct associateddevicedata *head, char*
             CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, frequency_band = \"%s\"\n", "5GHz, set to _5GHz" ));
             avro_value_set_enum(&optional, avro_schema_enum_get_by_name(avro_value_get_schema(&optional), "_5GHz" ));
          }
+#ifndef WIFI_HAL_VERSION_3
          else
          {
             CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, frequency_band = \"%s\"\n", ptr->radioOperatingFrequencyBand ));
             avro_value_set_enum(&optional, avro_schema_enum_get_by_name(avro_value_get_schema(&optional), ptr->radioOperatingFrequencyBand));
          }
+#else
+         else
+         {
+            rc = strcmp_s("6GHz", strsize6GHZ, ptr->radioOperatingFrequencyBand, &ind);
+            ERR_CHK(rc);
+            if((rc == EOK) && (!ind))
+            {
+               CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, frequency_band = \"%s\"\n", "6GHz, set to _6GHz" ));
+               avro_value_set_enum(&optional, avro_schema_enum_get_by_name(avro_value_get_schema(&optional), "_6GHz" ));
+            }
+            else
+            {
+               CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, frequency_band = \"%s\"\n", ptr->radioOperatingFrequencyBand ));
+               avro_value_set_enum(&optional, avro_schema_enum_get_by_name(avro_value_get_schema(&optional), ptr->radioOperatingFrequencyBand));
+            }
+         }
+#endif
       }
 	  
       if ( CHK_AVRO_ERR ) CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, %s\n", avro_strerror()));

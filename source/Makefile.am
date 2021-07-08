@@ -17,3 +17,7 @@
 # limitations under the License.
 ##########################################################################
 SUBDIRS = HarvesterSsp HarvesterCore
+
+if WITH_GTEST_SUPPORT
+SUBDIRS += test
+endif

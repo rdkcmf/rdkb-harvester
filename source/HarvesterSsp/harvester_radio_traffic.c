@@ -310,12 +310,21 @@ void _rtsyscmd(FILE *f, char *retBuf, int retBufSize)
 int getRadioBssid(int radioIndex, char* radio_BSSID)
 {
     int ret = 0;
-    FILE *f = NULL;
     CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s ENTER\n", __FUNCTION__ ));
 
     if(strlen(radio_BSSID) == 0)
-    {   
+    {
+#if defined(_XB6_PRODUCT_REQ_) && !defined(_XB7_PRODUCT_REQ_)
+    char radioIfName[128] = {0};
+    int ssidIndex = (radioIndex == 0) ? 1 : 0;
+    ret = wifi_getSSIDMACAddress(ssidIndex, radioIfName);
+    if (ret)
+    {
+       CcspHarvesterTrace(("RDK_LOG_ERROR, Harvester %s : wifi_getSSIDMACAddress returned error [%d] \n",__FUNCTION__ , ret));
+    }
+#else
         char radioIfName[128] = {0};
+        FILE *f = NULL;
         ret = wifi_getRadioIfName(radioIndex, radioIfName);
         if (ret)
         {
@@ -336,6 +345,7 @@ int getRadioBssid(int radioIndex, char* radio_BSSID)
                 CcspHarvesterTrace(("RDK_LOG_ERROR, Harvester %s : Error closing command pipe! ret : [%d] \n",__FUNCTION__ , ret));
             }
         }
+#endif
     }
     else
     {

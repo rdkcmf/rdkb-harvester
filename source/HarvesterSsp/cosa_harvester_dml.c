@@ -401,6 +401,7 @@ InterfaceDevicesWifi_SetParamBoolValue
         g_pHarvester->bIDWEnabledChanged = true;
         g_pHarvester->bIDWEnabled = bValue;
         CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s : ParamName[%s] Value[%d] \n", __FUNCTION__ , ParamName, bValue ));
+        CcspTraceInfo(("RDKB_HARVESTER_VALUE_CHANGED - WiFiInterfaceDevice Report %s\n", (bValue) ?  "Enabled" : "Disabled" ));
         return TRUE;
     }
 
@@ -1042,6 +1043,7 @@ RadioInterfaceStatistics_SetParamBoolValue
         g_pHarvester->bRISEnabledChanged = true;
         g_pHarvester->bRISEnabled = bValue;
         CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s : ParamName[%s] Value[%d] \n", __FUNCTION__ , ParamName, bValue ));
+        CcspTraceInfo(("RDKB_HARVESTER_VALUE_CHANGED - WiFiRadioInterfaceStats Report %s\n", (bValue) ?  "Enabled" : "Disabled" ));
         return TRUE;
     }
 
@@ -1701,6 +1703,7 @@ NeighboringAP_SetParamBoolValue
         g_pHarvester->bNAPEnabledChanged = true;
         g_pHarvester->bNAPEnabled = bValue;
         CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s : ParamName[%s] Value[%d] \n", __FUNCTION__ , ParamName, bValue ));
+        CcspTraceInfo(("RDKB_HARVESTER_VALUE_CHANGED - WiFiNeighbourAP Report %s\n", (bValue) ?  "Enabled" : "Disabled" ));
         return TRUE;
     }
     rc =  strcmp_s( "OnDemandScan",strlen("OnDemandScan"),ParamName, &ind);

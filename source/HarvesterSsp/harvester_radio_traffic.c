@@ -49,7 +49,7 @@ BOOL RISHarvesterStatus = FALSE;
 ULONG RISOverrideTTL = 300;
 ULONG RISOverrideTTLDefault = 300;
 
-char RadioBSSID[2][19] = {{'\0','\0'}};
+char RadioBSSID[MAX_NUM_RADIOS][19] = {{0}};
 
 static pthread_mutex_t risMutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t risCond = PTHREAD_COND_INITIALIZER;

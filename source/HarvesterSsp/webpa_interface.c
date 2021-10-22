@@ -145,7 +145,7 @@ void sendWebpaMsg(char *serviceName, char *dest, char *trans_id, char *contentTy
         CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, wrp_msg->msg_type :%d\n",wrp_msg->msg_type));
         if(wrp_msg->u.event.payload!=NULL)
         	CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, wrp_msg->u.event.payload :%s\n",(char *)(wrp_msg->u.event.payload)));
-        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, wrp_msg->u.event.payload_size :%d\n",wrp_msg->u.event.payload_size));
+        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, wrp_msg->u.event.payload_size :%lu\n",(ULONG)wrp_msg->u.event.payload_size));
 		if(wrp_msg->u.event.source!=NULL)
         	CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, wrp_msg->u.event.source :%s\n",wrp_msg->u.event.source));
 		if(wrp_msg->u.event.dest!=NULL)

@@ -125,7 +125,7 @@ ANSC_STATUS ssp_Mbi_MessageBusEngage(char * component_id,char * config_file,char
         fprintf(stderr, "Waiting loop for PSM module, ready = %d count = %d\n", ready, count );
     }
 
-    CcspTraceInfo(("!!! Connected to message bus... bus_handle: 0x%08X !!!\n", bus_handle));
+    CcspTraceInfo(("!!! Connected to message bus... bus_handle: 0x%8p !!!\n", bus_handle));
 
     if ( ready == true )
     {

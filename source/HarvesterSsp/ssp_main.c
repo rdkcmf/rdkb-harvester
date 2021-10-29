@@ -325,32 +325,32 @@ void HarvesterLog(char *msg)
       {
         if(type == LOGERROR)
         {
-          CcspTraceError((LogMsg));
+          CcspTraceError(("%s\n", LogMsg));
         }
         else if(type == LOGWARN)
         {
-          CcspTraceWarning((LogMsg));
+          CcspTraceWarning(("%s\n", LogMsg));
         }
         else if(type == LOGNOTICE)
         {
-          CcspTraceNotice((LogMsg));
+          CcspTraceNotice(("%s\n", LogMsg));
         }
         else if(type == LOGINFO)
         {
-          CcspTraceInfo((LogMsg));
+          CcspTraceInfo(("%s\n", LogMsg));
         }
         else if(type == LOGDEBUG )
         {
-          CcspTraceDebug((LogMsg));
+          CcspTraceDebug(("%s\n", LogMsg));
         }
         else if(type == LOGFATAL )
         {
-          CcspTraceCritical((LogMsg));
+          CcspTraceCritical(("%s\n", LogMsg));
         }
       }
       else
       {
-        CcspTraceInfo((LogMsg));
+        CcspTraceInfo(("%s\n", LogMsg));
       }  
     }
     // tok is unused

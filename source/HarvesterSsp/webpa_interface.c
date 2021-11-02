@@ -232,7 +232,7 @@ static void *handle_parodus()
 						.client_url = NULL
 					   };
 		            
-		CcspHarvesterConsoleTrace(("RDK_LOG_INFO, Configurations => service_name : %s parodus_url : %s client_url : %s\n", cfg1.service_name, cfg1.parodus_url, cfg1.client_url ));
+		CcspHarvesterConsoleTrace(("RDK_LOG_INFO, Configurations => service_name : %s parodus_url : %s client_url : %s\n", cfg1.service_name, cfg1.parodus_url, (cfg1.client_url) ? cfg1.client_url : "" ));
 		   
 		while(1)
 		{

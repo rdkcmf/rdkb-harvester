@@ -38,7 +38,9 @@ extern FILE* debugLogFile;
 
 #define  CcspTraceBaseStr(arg ...)                                                                  \
             do {                                                                                    \
-                snprintf(pTempChar1, 4095, arg);                                                    \
+                if (snprintf(pTempChar1, 4095, arg) > (int)sizeof(pTempChar1)) {                    \
+                    if(consoleDebugEnable) fprintf(debugLogFile, "%s: truncation while copying arg to pTempChar1 \n", __FUNCTION__);  \
+                }                                                                                   \
             } while (FALSE)
 
 

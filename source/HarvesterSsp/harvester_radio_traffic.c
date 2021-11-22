@@ -71,8 +71,7 @@ extern ulong GetCurrentTimeInSecond();
 extern int getTimeOffsetFromUtc();
 #endif
 
-static struct radiotrafficdata *headnode = NULL;
-static struct radiotrafficdata *currnode = NULL;
+static struct radiotrafficdata rIndex[MAX_NUM_RADIOS];
 
 // RDKB-9258 : set polling and reporting periods to NVRAM after TTL expiry
 extern ANSC_STATUS SetRISPollingPeriodInNVRAM(ULONG pPollingVal);
@@ -363,46 +362,25 @@ int add_to_rt_list(int radioIndex, BOOL enabled, char* freqband, ULONG channel, 
     int ret = 0;
     CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s ENTER \n", __FUNCTION__ ));
 
-    struct radiotrafficdata *ptr = malloc(sizeof(*ptr));
-    if (ptr == NULL)
+    ret = getRadioBssid(radioIndex, (char*) &RadioBSSID[radioIndex]);
+    if (ret)
     {
-        CcspHarvesterTrace(("RDK_LOG_ERROR, Harvester %s : Linked List Allocation Failed \n", __FUNCTION__ ));
-        return -1;
+        /* Coverity Fix CID: 124997  PRINTF_ARGS */
+        CcspHarvesterTrace(("RDK_LOG_ERROR, Harvester %s : Radio %d does not have a valid BSSID  or ERROR retured %d \n",__FUNCTION__ , radioIndex, ret));
+        return ret;
     }
-    else
-    {
-        ret = getRadioBssid(radioIndex, (char*) &RadioBSSID[radioIndex]);
-            if (ret)
-            {
-                free(ptr); /*RDKB-7465, CID-32940, free unused resource*/
-                /* Coverity Fix CID: 124997  PRINTF_ARGS */
-                CcspHarvesterTrace(("RDK_LOG_ERROR, Harvester %s : Radio %d does not have a valid BSSID  or ERROR retured %d \n",__FUNCTION__ , radioIndex, ret));
-                return ret;
-            }
 
-        ptr->radioBssid = strdup((char*)&RadioBSSID[radioIndex]);
-        ptr->enabled = enabled;
-        ptr->rtdata = radiotrafficdata;
-        ptr->radioOperatingFrequencyBand = strdup(freqband);
-        ptr->radiOperatingChannelBandwidth = strdup(opchanbw);
-        ptr->radioChannel = channel;
-        ptr->next = NULL;
-        gettimeofday(&(ptr->timestamp), NULL);
+    rIndex[radioIndex].radioBssid = strdup((char*)&RadioBSSID[radioIndex]);
+    rIndex[radioIndex].enabled = enabled;
+    rIndex[radioIndex].rtdata = radiotrafficdata;
+    rIndex[radioIndex].radioOperatingFrequencyBand = strdup(freqband);
+    rIndex[radioIndex].radiOperatingChannelBandwidth = strdup(opchanbw);
+    rIndex[radioIndex].radioChannel = channel;
+    gettimeofday(&(rIndex[radioIndex].timestamp), NULL);
 #if !defined(UTC_ENABLE_ATOM) && !defined(_HUB4_PRODUCT_REQ_)	
-        ptr->timestamp.tv_sec -= getTimeOffsetFromUtc();
+    rIndex[radioIndex].timestamp.tv_sec -= getTimeOffsetFromUtc();
 #endif
 
-
-        if (headnode == NULL)
-        {
-            headnode = currnode = ptr;
-        }
-        else
-        {
-            currnode->next = ptr;
-            currnode = ptr;
-        }
-    }
 
     CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s EXIT \n", __FUNCTION__ ));
 
@@ -412,40 +390,57 @@ int add_to_rt_list(int radioIndex, BOOL enabled, char* freqband, ULONG channel, 
 void print_rt_list()
 {
     int z = 0;
+    int ret = 0;
+    ULONG radio_num = 0;
     CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s ENTER \n", __FUNCTION__ ));
-    struct radiotrafficdata  *ptr = headnode;
-    fprintf(stderr, " Head Ptr [%lx]\n", (ulong)headnode);
-    while (ptr != NULL)
+
+    ret =  wifi_getRadioNumberOfEntries(&radio_num);
+    CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Number of Radio Entries = %ld ReturnValue [%d]\n", radio_num, ret));
+
+    for(z = 0; z < radio_num; z++)
     {
-        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Head Ptr [%lx] TimeStamp[%d] for Node[%d] with RadioBSSID[%s] \n", (ulong)ptr, (int)ptr->timestamp.tv_sec, z, ptr->radioBssid));
-        ptr = ptr->next;
-        z++;
+        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, TimeStamp[%d] for Node[%d] with RadioBSSID[%s] \n", (int)rIndex[z].timestamp.tv_sec, z, (rIndex[z].radioBssid != NULL)?rIndex[z].radioBssid:"radioBssid is NULL"));
     }
     CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s EXIT \n", __FUNCTION__ ));
     return;
 }
 
-/* Function to delete the entire linked list */
 void delete_rt_list()
 {
+    int i = 0;
+    int ret = 0;
+    ULONG radio_num = 0;
     CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s ENTER \n", __FUNCTION__ ));
-    
-    currnode = headnode;
-    struct radiotrafficdata* next = NULL;
 
-    while (currnode != NULL)
+    ret =  wifi_getRadioNumberOfEntries(&radio_num);
+    CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Number of Radio Entries = %ld ReturnValue [%d]\n", radio_num, ret));
+
+    for(i = 0; i < radio_num; i++)
     {
-        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Deleting Node Head Ptr [%lx] with radioName[%s] \n", (ulong)currnode, currnode->radioBssid));
-        next = currnode->next;
-        free(currnode->radioBssid);
-        free(currnode->radioOperatingFrequencyBand);
-        free(currnode->radiOperatingChannelBandwidth);
-        free(currnode->rtdata);
-        free(currnode);
-        currnode = next;
+        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, with radioName[%s] \n", rIndex[i].radioBssid));
+        if((rIndex[i].radioBssid) != NULL)
+        {
+            free(rIndex[i].radioBssid);
+        }
+        if((rIndex[i].radioOperatingFrequencyBand) != NULL)
+        {
+            free(rIndex[i].radioOperatingFrequencyBand);
+        }
+        if((rIndex[i].radiOperatingChannelBandwidth) != NULL)
+        {
+            free(rIndex[i].radiOperatingChannelBandwidth);
+        }
+        if((rIndex[i].rtdata) != NULL)
+        {
+            free(rIndex[i].rtdata);
+        }
+        rIndex[i].radioBssid = NULL;
+        rIndex[i].radioOperatingFrequencyBand = NULL;
+        rIndex[i].radiOperatingChannelBandwidth = NULL;
+        rIndex[i].rtdata = NULL;
+        memset(&rIndex[i], 0, sizeof(struct radiotrafficdata));
     }
 
-    headnode = currnode;
     CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s EXIT \n", __FUNCTION__ ));
 
     return;
@@ -588,11 +583,9 @@ void* StartRadioTrafficHarvesting( void *arg )
 
             if (currentRISReportingPeriod >= GetRISReportingPeriod())
             {
-                struct radiotrafficdata* ptr = headnode;
-                if(ptr != NULL)
                 {
                     CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG,  Before Sending to WebPA and AVRO RISReportingPeriod[%ld]  \n", GetRISReportingPeriod()));
-                    harvester_report_radiotraffic(ptr);
+                    harvester_report_radiotraffic(rIndex);
                     delete_rt_list();
                 }
 

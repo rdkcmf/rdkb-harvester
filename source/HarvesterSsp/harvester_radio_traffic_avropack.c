@@ -155,6 +155,7 @@ if(ris_schemaidbuffer)
 return len;
 }
 
+#if 0
 int NumberofRTElementsinLinkedList(struct radiotrafficdata* head)
 {
   int numelements = 0;
@@ -166,6 +167,7 @@ int NumberofRTElementsinLinkedList(struct radiotrafficdata* head)
   }
   return numelements;
 }
+#endif
 
 avro_writer_t prepare_rt_writer()
 {
@@ -260,14 +262,13 @@ avro_writer_t prepare_rt_writer()
 
 
 /* function call from harvester with parameters */
-void harvester_report_radiotraffic(struct radiotrafficdata *head)
+void harvester_report_radiotraffic(struct radiotrafficdata *ptr)
 {
-  int k = 0;
+  int k = 0, i = 0;
   uint8_t* b64buffer =  NULL;
   size_t decodesize = 0;
-  int numElements = 0;
+  ULONG numElements = 0;
   wifi_radioTrafficStats2_t *ps = NULL;
-  struct radiotrafficdata* ptr = head;
   avro_writer_t writer;
   char * serviceName = "harvester";
   char * dest = "event:raw.kestrel.reports.RadioInterfacesStatistics";
@@ -282,11 +283,6 @@ void harvester_report_radiotraffic(struct radiotrafficdata *head)
 
   CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s : ENTER \n", __FUNCTION__ ));
 
-  CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Head [%lx] \n", (ulong)head));
-
-  numElements = NumberofRTElementsinLinkedList(ptr);
-
-  CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, numElements = %d\n", numElements ));
 
   OneAvroRTSerializedSize = 0;
 
@@ -471,10 +467,18 @@ void harvester_report_radiotraffic(struct radiotrafficdata *head)
   strsize2_4GHZ = strlen("2.4GHz");
   strsize5GHZ = strlen("5GHz");
 
-    while(ptr != NULL)
+    rc = wifi_getRadioNumberOfEntries(&numElements);
+    CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, wifi_getRadioNumberOfEntries() ret value %d\n", rc));
+    if(rc != EOK)
+    {
+       ERR_CHK(rc);
+       return;
+    }
+
+    for(i = 0; i < numElements; i++)
     {
       ps = ptr->rtdata;
-      CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Current Link List Ptr = [0x%lx], numElements = %d\n", (ulong)ptr, numElements ));
+      CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, numElements = %ld\n", numElements ));
 
       //Append a Radio Report item to array
       avro_value_append(&adrField, &dr, NULL);
@@ -698,7 +702,7 @@ void harvester_report_radiotraffic(struct radiotrafficdata *head)
       avro_value_set_float(&optional, (float)ps->radio_MedianNoiseFloorOnChannel);
       if ( CHK_AVRO_ERR ) CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, %s\n", avro_strerror()));
 
-      ptr = ptr->next; // next link list
+      ptr++;
 
       /* check for writer size, if buffer is almost full, skip trailing linklist */
       avro_value_sizeof(&adr, &AvroRTSerializedSize);

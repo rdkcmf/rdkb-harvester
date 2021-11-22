@@ -60,8 +60,6 @@ char* radioOperatingFrequencyBand; //Possible value 2.4Ghz and 5.0 Ghz
 ULONG radioChannel;  // Possible Value between 1-11
 char* radiOperatingChannelBandwidth;
 wifi_radioTrafficStats2_t* rtdata;
-
-struct radiotrafficdata *next;
 };
 
 extern void harvester_report_associateddevices(struct associateddevicedata *head, char* ServiceType);

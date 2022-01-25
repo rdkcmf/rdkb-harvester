@@ -223,7 +223,6 @@ avro_writer_t prepare_nap_writer()
 /* function call from harvester with parameters */
 void harvester_report_neighboringap(struct neighboringapdata *head)
 {
-  pthread_mutex_lock(&avropack_mutex); 
   int i, j, k = 0;
   uint8_t* b64buffer =  NULL;
   size_t decodesize = 0;
@@ -271,11 +270,12 @@ void harvester_report_neighboringap(struct neighboringapdata *head)
   if ( macStr == NULL )
   {
     macStr = getDeviceMac();
+    pthread_mutex_lock(&avropack_mutex);
     rc = strcpy_s(CpemacStr,sizeof(CpemacStr),macStr);
+    pthread_mutex_unlock(&avropack_mutex);
     if(rc != EOK)
     {
        ERR_CHK(rc);
-       pthread_mutex_unlock(&avropack_mutex);
        return;
     }
     CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Received DeviceMac from Atom side: %s\n",macStr));
@@ -432,7 +432,6 @@ void harvester_report_neighboringap(struct neighboringapdata *head)
       if(rc != EOK)
       {
           ERR_CHK(rc);
-          pthread_mutex_unlock(&avropack_mutex);
           return;
       }
       avro_value_get_by_name(&dr, "operating_channel_bandwidth", &drField, NULL);
@@ -527,7 +526,6 @@ void harvester_report_neighboringap(struct neighboringapdata *head)
       {
         ERR_CHK(rc);
         free(b64buffer);
-        pthread_mutex_unlock(&avropack_mutex);
         return;
       }
       fprintf( stderr, "%c%c", buf[0], buf[1] );
@@ -562,9 +560,7 @@ void harvester_report_neighboringap(struct neighboringapdata *head)
 
   CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s : EXIT \n", __FUNCTION__ ));
 
-  pthread_mutex_unlock(&avropack_mutex);
 }
-
 
 void ap_avro_cleanup()
 {

@@ -93,7 +93,6 @@ BOOL Cosa_FindDestComp(char* pObjName,char** ppDestComponentName, char** ppDestP
 
 void sendWebpaMsg(char *serviceName, char *dest, char *trans_id, char *contentType, char *payload, unsigned int payload_len)
 {
-    pthread_mutex_lock(&webpa_mutex);
     wrp_msg_t *wrp_msg ;
     int retry_count = 0, backoffRetryTime = 0, c = 2;
     int sendStatus = -1;
@@ -158,7 +157,9 @@ void sendWebpaMsg(char *serviceName, char *dest, char *trans_id, char *contentTy
 	        backoffRetryTime = (int) pow(2, c) -1;
 
 	        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, retry_count : %d\n",retry_count));
+		pthread_mutex_lock(&webpa_mutex);
 	        sendStatus = libparodus_send(client_instance, wrp_msg);
+		pthread_mutex_unlock(&webpa_mutex);
 	        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, sendStatus is %d\n",sendStatus));
 	        if(sendStatus == 0)
 	        {
@@ -185,7 +186,6 @@ void sendWebpaMsg(char *serviceName, char *dest, char *trans_id, char *contentTy
 
     CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s EXIT\n", __FUNCTION__ ));
 
-    pthread_mutex_unlock(&webpa_mutex);
 }
 
 void initparodusTask()
@@ -465,7 +465,6 @@ char * getDeviceMac()
 
     while(!strlen(deviceMAC))
     {
-        pthread_mutex_lock(&device_mac_mutex);
         int ret = -1, val_size =0,cnt =0, fd = 0;
         parameterValStruct_t **parameterval = NULL;
 	char* dstComp = NULL, *dstPath = NULL;
@@ -481,14 +480,15 @@ char * getDeviceMac()
 
         if (strlen(deviceMAC))
         {
-            pthread_mutex_unlock(&device_mac_mutex);
             break;
         }
 
         fd = s_sysevent_connect(&token);
         if(CCSP_SUCCESS == check_ethernet_wan_status() && sysevent_get(fd, token, "eth_wan_mac", deviceMACValue, sizeof(deviceMACValue)) == 0 && deviceMACValue[0] != '\0')
         {
+	    pthread_mutex_lock(&device_mac_mutex);	
             AnscMacToLower(deviceMAC, deviceMACValue, sizeof(deviceMAC));
+	    pthread_mutex_unlock(&device_mac_mutex);
             CcspTraceInfo(("deviceMAC is %s\n", deviceMAC));
         }
         else
@@ -496,7 +496,6 @@ char * getDeviceMac()
             if(!Cosa_FindDestComp(getList, &dstComp, &dstPath) || !dstComp || !dstPath)
             {
                 CcspHarvesterConsoleTrace(("RDK_LOG_ERROR, Can not find Dest Component \n"));
-                pthread_mutex_unlock(&device_mac_mutex);
                 sleep(10);
                 continue;
             }            
@@ -543,8 +542,6 @@ char * getDeviceMac()
             free_parameterValStruct_t(bus_handle, val_size, parameterval);
             CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, After free_parameterValStruct_t...\n"));    
         }
-
-		pthread_mutex_unlock(&device_mac_mutex);
     }
         
     CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s EXIT\n", __FUNCTION__ ));

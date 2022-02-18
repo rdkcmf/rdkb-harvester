@@ -32,7 +32,6 @@
 #include "stdlib.h"
 #include "ccsp_dm_api.h"
 #include "harvester.h"
-#include "ccsp_custom_logs.h"
 #include "ccsp_harvesterLog_wrapper.h"
 #include "safec_lib_common.h"
 #include "secure_wrapper.h"

@@ -26,7 +26,6 @@
 #include "ccsp_psm_helper.h"
 
 /*Added for rdkb-4343*/
-#include "ccsp_custom_logs.h"
 #include "ccsp_harvesterLog_wrapper.h"
 
 #include "harvester_associated_devices.h"

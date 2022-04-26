@@ -483,6 +483,23 @@ void harvester_report_radiotraffic(struct radiotrafficdata *ptr)
 
     for(i = 0; i < numElements; i++)
     {
+      if(ptr == NULL)
+      {
+          ptr++;
+          CcspHarvesterTrace(("RDK_LOG_ERROR, Harvester %s : struct ptr for index[%d] is NULL\n", __FUNCTION__, i ));
+          continue;
+      }
+      else
+      {
+          if(ptr->radioBssid == NULL || ptr->radioOperatingFrequencyBand == NULL || ptr->radiOperatingChannelBandwidth == NULL || ptr->rtdata == NULL)
+          {
+              ptr++;
+              CcspHarvesterTrace(("RDK_LOG_ERROR, Harvester %s : index[%d] struct has some or whole parameters were NULL\n", __FUNCTION__, i ));
+              continue;
+          }
+          CcspHarvesterTrace(("RDK_LOG_DEBUG, Harvester %s : index[%d] NULL checks are Success\n", __FUNCTION__, i));
+      }
+
       ps = ptr->rtdata;
       CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, numElements = %ld\n", numElements ));
 

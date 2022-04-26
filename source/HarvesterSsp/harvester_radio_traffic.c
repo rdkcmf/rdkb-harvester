@@ -573,7 +573,7 @@ void* StartRadioTrafficHarvesting( void *arg )
                 ret = GetRadioTrafficData(k);
                 if (ret)
                 {
-                    CcspHarvesterTrace(("RDK_LOG_DEBUG, GetRadioRadioTrafficData returned error [%d] for radioIndex[%d] \n", ret, k));
+                    CcspHarvesterTrace(("RDK_LOG_ERROR, GetRadioRadioTrafficData returned error [%d] for radioIndex[%d] \n", ret, k));
                 }
             }
 

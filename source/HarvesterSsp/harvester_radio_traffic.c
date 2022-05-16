@@ -551,6 +551,7 @@ void* StartRadioTrafficHarvesting( void *arg )
 
     int ret = 0;
     ULONG uDefaultVal = 0;
+    static int retry_count = 0;
 
     currentRISReportingPeriod = GetRISReportingPeriod();
 
@@ -565,9 +566,12 @@ void* StartRadioTrafficHarvesting( void *arg )
         int k = 0;
         
         int ret =  wifi_getRadioNumberOfEntries(&output); //Tr181
+
         CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Number of Radio Entries = %ld ReturnValue [%d]\n", output, ret));
         if (!ret && output > 0)
         {
+            retry_count = 0;
+
             for (k = 0; k < output; k++)
             {
                 ret = GetRadioTrafficData(k);
@@ -621,6 +625,13 @@ void* StartRadioTrafficHarvesting( void *arg )
         else
         {
             CcspHarvesterTrace(("RDK_LOG_WARN, wifi_getRadioNumberOfEntries Error [%d] or No SSID [%ld] \n", ret, output));
+            retry_count++;
+            if( retry_count == 3)
+            {
+                CcspHarvesterTrace(("RDK_LOG_WARN, Max retry reached for wifi_getRadioNumberOfEntries\n"));
+                WaitForPthreadConditionTimeoutRIS();
+                retry_count = 0;
+            }
         }
 
         CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, GetRISPollingPeriod[%ld]\n", GetRISPollingPeriod()));

@@ -36,6 +36,9 @@
 #include "safec_lib_common.h"
 #include "harvester_associated_devices.h"
 #include "secure_wrapper.h"
+#ifdef RDK_ONEWIFI
+#include "harvester_rbus_api.h"
+#endif
 
 ULONG RISReportingPeriodDefault = DEFAULT_POLLING_INTERVAL;
 ULONG RISPollingPeriodDefault = DEFAULT_REPORTING_INTERVAL;
@@ -50,6 +53,10 @@ ULONG RISOverrideTTL = 300;
 ULONG RISOverrideTTLDefault = 300;
 
 char RadioBSSID[MAX_NUM_RADIOS][19] = {{0}};
+
+#ifdef RDK_ONEWIFI
+char bufferRIR[72] = {'\0'};
+#endif
 
 static pthread_mutex_t risMutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t risCond = PTHREAD_COND_INITIALIZER;
@@ -316,7 +323,12 @@ int getRadioBssid(int radioIndex, char* radio_BSSID)
 #if defined(_XB6_PRODUCT_REQ_) && !defined(_XB7_PRODUCT_REQ_)
     char radioIfName[128] = {0};
     int ssidIndex = (radioIndex == 0) ? 1 : 0;
-    ret = wifi_getSSIDMACAddress(ssidIndex, radioIfName);
+    #ifdef RDK_ONEWIFI
+         snprintf(bufferRIR, sizeof(bufferRIR), "Device.WiFi.SSID.%d.BSSID", ssidIndex+1);
+         ret = rbus_getStringValue((char*)&radioIfName, bufferRIR);
+    #else
+         ret = wifi_getSSIDMACAddress(ssidIndex, radioIfName);
+    #endif
     if (ret)
     {
        CcspHarvesterTrace(("RDK_LOG_ERROR, Harvester %s : wifi_getSSIDMACAddress returned error [%d] \n",__FUNCTION__ , ret));
@@ -324,7 +336,13 @@ int getRadioBssid(int radioIndex, char* radio_BSSID)
 #else
         char radioIfName[128] = {0};
         FILE *f = NULL;
-        ret = wifi_getRadioIfName(radioIndex, radioIfName);
+        #ifdef RDK_ONEWIFI
+             snprintf(bufferRIR, sizeof(bufferRIR), "Device.WiFi.Radio.%d.Name", radioIndex+1);
+             ret = rbus_getStringValue((char*)&radioIfName, bufferRIR);
+        #else
+             ret = wifi_getRadioIfName(radioIndex, radioIfName);
+        #endif
+
         if (ret)
         {
             CcspHarvesterTrace(("RDK_LOG_ERROR, Harvester %s : wifi_getRadioIfName returned error [%d] \n",__FUNCTION__ , ret));
@@ -392,9 +410,13 @@ void print_rt_list()
     int z = 0;
     int ret = 0;
     ULONG radio_num = 0;
-    CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s ENTER \n", __FUNCTION__ ));
 
-    ret =  wifi_getRadioNumberOfEntries(&radio_num);
+    CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s ENTER \n", __FUNCTION__ ));
+    #ifdef RDK_ONEWIFI
+           ret = rbus_getUInt32Value(&radio_num, "Device.WiFi.RadioNumberOfEntries");
+    #else
+           ret =  wifi_getRadioNumberOfEntries(&radio_num);
+    #endif
     CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Number of Radio Entries = %ld ReturnValue [%d]\n", radio_num, ret));
 
     for(z = 0; z < radio_num; z++)
@@ -412,7 +434,11 @@ void delete_rt_list()
     ULONG radio_num = 0;
     CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s ENTER \n", __FUNCTION__ ));
 
-    ret =  wifi_getRadioNumberOfEntries(&radio_num);
+    #ifdef RDK_ONEWIFI
+           ret = rbus_getUInt32Value(&radio_num, "Device.WiFi.RadioNumberOfEntries");
+    #else
+           ret =  wifi_getRadioNumberOfEntries(&radio_num);
+    #endif
     CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Number of Radio Entries = %ld ReturnValue [%d]\n", radio_num, ret));
 
     for(i = 0; i < radio_num; i++)
@@ -455,31 +481,52 @@ int GetRadioTrafficData(int radioIndex)
     ULONG channel = 0;
     char freqband[128] = {0};
     char opchanbw[128] = {0};
+    int ret = 0;
 
     CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Radio Index is %d \n", radioIndex));
 
-    int ret = wifi_getRadioEnable(radioIndex, &enabled);
+    #ifdef RDK_ONEWIFI
+          snprintf(bufferRIR, sizeof(bufferRIR), "Device.WiFi.Radio.%d.Enable", radioIndex+1);
+          ret = rbus_getBoolValue(&enabled,  bufferRIR);
+    #else
+          ret = wifi_getRadioEnable(radioIndex, &enabled);
+    #endif
     if (ret)
     {
         CcspHarvesterTrace(("RDK_LOG_ERROR, Harvester %s :  Radio %d is NOT ENABLED  or ERROR retured %d \n",__FUNCTION__ , radioIndex, ret));
         return ret;
     }
 
-    ret = wifi_getRadioChannel(radioIndex, &channel);
+    #ifdef RDK_ONEWIFI
+          snprintf(bufferRIR, sizeof(bufferRIR), "Device.WiFi.Radio.%d.Channel", radioIndex+1);
+          ret = rbus_getUInt32Value(&channel, bufferRIR);
+    #else
+          ret = wifi_getRadioChannel(radioIndex, &channel);
+    #endif
     if (ret)
     {
         CcspHarvesterTrace(("RDK_LOG_ERROR, Harvester %s : radioIndex[%d] channel [%ld] \n", __FUNCTION__ , radioIndex, channel));
         return ret;
     }
 
-    ret = wifi_getRadioOperatingFrequencyBand(radioIndex, (char*)&freqband);
+    #ifdef RDK_ONEWIFI
+         snprintf(bufferRIR, sizeof(bufferRIR), "Device.WiFi.Radio.%d.OperatingFrequencyBand", radioIndex+1);
+         ret = rbus_getStringValue((char*)&freqband, bufferRIR);
+    #else
+         ret = wifi_getRadioOperatingFrequencyBand(radioIndex, (char*)&freqband);
+    #endif
     if (ret)
     {
         CcspHarvesterTrace(("RDK_LOG_ERROR, Harvester %s :  radioIndex[%d] freqband [%s] \n",__FUNCTION__ , radioIndex, freqband));
         return ret;
     }
 
-    ret = wifi_getRadioOperatingChannelBandwidth(radioIndex, (char*)&opchanbw);
+    #ifdef RDK_ONEWIFI
+         snprintf(bufferRIR, sizeof(bufferRIR), "Device.WiFi.Radio.%d.OperatingChannelBandwidth", radioIndex+1);
+         ret = rbus_getStringValue((char*)&opchanbw, bufferRIR);
+    #else
+         ret = wifi_getRadioOperatingChannelBandwidth(radioIndex, (char*)&opchanbw);
+    #endif
     if (ret)
     {
         CcspHarvesterTrace(("RDK_LOG_ERROR, Harvester %s : radioIndex[%d] opchanbw [%s] \n",__FUNCTION__ , radioIndex, opchanbw));
@@ -488,8 +535,12 @@ int GetRadioTrafficData(int radioIndex)
 
 
     radio_traffic_stats = (wifi_radioTrafficStats2_t*) malloc(sizeof(wifi_radioTrafficStats2_t));
-    ret = wifi_getRadioTrafficStats2(radioIndex, radio_traffic_stats);
-    if(( 0 == ret ) && ( NULL != radio_traffic_stats ) ) 
+    #ifdef RDK_ONEWIFI
+        ret = rbus_wifi_getRadioTrafficStats2(radioIndex+1, radio_traffic_stats);
+    #else
+        ret = wifi_getRadioTrafficStats2(radioIndex, radio_traffic_stats);
+    #endif
+    if(( 0 == ret ) && ( NULL != radio_traffic_stats ) )
     {
         ret = add_to_rt_list( radioIndex,  enabled, freqband, channel, opchanbw, radio_traffic_stats);
         CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, ************RadioTraffic Data Begins************* \n"));
@@ -564,8 +615,12 @@ void* StartRadioTrafficHarvesting( void *arg )
 
         ULONG output = 0;
         int k = 0;
-        
-        int ret =  wifi_getRadioNumberOfEntries(&output); //Tr181
+
+    #ifdef RDK_ONEWIFI
+           ret = rbus_getUInt32Value(&output, "Device.WiFi.RadioNumberOfEntries");
+    #else
+           ret =  wifi_getRadioNumberOfEntries(&output); //Tr181
+    #endif
 
         CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Number of Radio Entries = %ld ReturnValue [%d]\n", output, ret));
         if (!ret && output > 0)

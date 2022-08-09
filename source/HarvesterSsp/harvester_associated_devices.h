@@ -130,4 +130,13 @@ BOOL ValidateIDWPeriod(ULONG interval);
 
 BOOL isvalueinarray(ULONG val, ULONG *arr, int size);
 
+#ifdef RDK_ONEWIFI
+/**
+ * @brief Extract the radioIndex value from the given string input
+ *
+ * @param[in] String with radioindex value.
+ * @return radio index value
+ */
+int parseInputValue(char * value);
+#endif
 #endif 

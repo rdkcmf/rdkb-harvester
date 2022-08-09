@@ -31,8 +31,17 @@
 #include "harvester_neighboring_ap_ondemand.h"
 #include "harvester_avro.h"
 #include "ccsp_harvesterLog_wrapper.h"
+#ifdef RDK_ONEWIFI
+#include "harvester_rbus_api.h"
+
+static bool neighWiFiDiag_ondemand_executed = false;
+#endif
 
 BOOL NAPOnDemandHarvesterStatus = FALSE;
+
+#ifdef RDK_ONEWIFI
+char tmp_buffer[72] = {'\0'};
+#endif
 
 static struct neighboringapdata *naphead = NULL;
 static struct neighboringapdata *napcurr = NULL;
@@ -214,38 +223,56 @@ int GetRadioNeighboringAPOnDemandData(int radioIndex, char* radioIfName)
     BOOL enabled = FALSE;
     wifi_neighbor_ap2_t *neighbor_ap_array=NULL;
 
+    int ret = 0;
     UINT array_size = 0;
     ULONG channel = 0;
     char freqband[128] = {0};
 
     CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Radio Index is %d for InterfaceName [%s] \n", radioIndex, radioIfName));
 
-
-    int ret = wifi_getRadioEnable(radioIndex, &enabled);
+    #ifdef RDK_ONEWIFI
+         snprintf(tmp_buffer, sizeof(tmp_buffer), "Device.WiFi.Radio.%d.Enable", radioIndex+1);
+         ret = rbus_getBoolValue(&enabled, tmp_buffer);
+    #else
+         ret = wifi_getRadioEnable(radioIndex, &enabled);
+    #endif
     if (ret || enabled == FALSE)
     {
         CcspHarvesterTrace(("RDK_LOG_ERROR, Harvester %s : Radio %s is NOT ENABLED  or ERROR retured %d \n",__FUNCTION__ , radioIfName, ret));
         return ret;
     }
-
-    ret = wifi_getRadioChannel(radioIndex, &channel);
+    #ifdef RDK_ONEWIFI
+         snprintf(tmp_buffer, sizeof(tmp_buffer), "Device.WiFi.Radio.%d.Channel", radioIndex+1);
+         ret = rbus_getUInt32Value(&channel, tmp_buffer);
+    #else
+         ret = wifi_getRadioChannel(radioIndex, &channel);
+    #endif
     if (ret)
     {
         CcspHarvesterTrace(("RDK_LOG_ERROR, Harvester %s : radioIndex[%d] channel [%ld] \n", __FUNCTION__ , radioIndex, channel));
         return ret;
     }
 
-
-    ret = wifi_getRadioOperatingFrequencyBand(radioIndex, (char*)&freqband);
+    #ifdef RDK_ONEWIFI
+         snprintf(tmp_buffer, sizeof(tmp_buffer), "Device.WiFi.Radio.%d.OperatingFrequencyBand", radioIndex+1);
+         ret = rbus_getStringValue(freqband, tmp_buffer);
+    #else
+         ret = wifi_getRadioOperatingFrequencyBand(radioIndex, (char*)&freqband);
+    #endif
     if (ret)
     {
         CcspHarvesterTrace(("RDK_LOG_ERROR, Harvester %s : radioIndex[%d] freqband [%s] \n",__FUNCTION__ , radioIndex, freqband));
         return ret;
     }
 
-
-
-    ret = wifi_getNeighboringWiFiDiagnosticResult2(radioIndex, &neighbor_ap_array, &array_size);
+    #ifdef RDK_ONEWIFI
+        if(!neighWiFiDiag_ondemand_executed)
+            ret = rbus_wifi_getNeighboringWiFiDiagnosticResult2(&neighWiFiDiag_ondemand_executed, &neighbor_ap_array, &array_size);
+        else
+            CcspHarvesterTrace(("RDK_LOG_INFO, Harvester %s : rbus_getNeighboringWiFiDiagnosticResult2 already executed hence not running again\n", __FUNCTION__));
+    #else
+        ret = wifi_getNeighboringWiFiDiagnosticResult2(radioIndex, &neighbor_ap_array, &array_size);
+    #endif
     if(( 0 == ret ) && ( NULL != neighbor_ap_array ) && ( array_size > 0 ) ) 
     {
         add_to_nap_ondemand_list(radioIfName, array_size, neighbor_ap_array, freqband, channel);
@@ -308,13 +335,22 @@ void* StartNeighboringAPOnDemandHarvesting(void* arg)
         ULONG output = 0;
         int k = 0;
         char radioIfName[128] = {0};
-        int ret =  wifi_getRadioNumberOfEntries(&output); //Tr181
+        #ifdef RDK_ONEWIFI
+             ret = rbus_getUInt32Value(&output, "Device.WiFi.RadioNumberOfEntries");
+        #else
+             int ret =  wifi_getRadioNumberOfEntries(&output); //Tr181
+        #endif
         CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Number of Radio Entries = %ld ReturnValue [%d]\n", output, ret));
         if (!ret && output > 0)
         {
             for (k = 0; k < output; k++)
-            {
-                ret = wifi_getRadioIfName(k, (char*)&radioIfName);
+            {            
+                #ifdef RDK_ONEWIFI
+                    snprintf(tmp_buffer, sizeof(tmp_buffer), "Device.WiFi.Radio.%d.Name", k+1);
+                    ret = rbus_getStringValue(radioIfName, tmp_buffer);
+                #else
+                    ret = wifi_getRadioIfName(k, (char*)&radioIfName);
+                #endif
                 if (ret)
                 {
                     CcspHarvesterTrace(("RDK_LOG_WARN, wifi_getRadioIfName returned error [%d] \n", ret));
@@ -336,6 +372,9 @@ void* StartNeighboringAPOnDemandHarvesting(void* arg)
             }
 
             SetNAPOnDemandHarvestingStatus(FALSE);
+            #ifdef RDK_ONEWIFI
+                neighWiFiDiag_ondemand_executed = false;
+            #endif
         }
         else
         {

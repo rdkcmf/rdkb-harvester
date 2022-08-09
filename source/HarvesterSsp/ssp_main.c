@@ -35,6 +35,9 @@
 #include "ccsp_harvesterLog_wrapper.h"
 #include "safec_lib_common.h"
 #include "secure_wrapper.h"
+#ifdef RDK_ONEWIFI
+#include "harvester_rbus_api.h"
+#endif
 
 #ifdef INCLUDE_BREAKPAD
 #include "breakpad_wrapper.h"
@@ -149,6 +152,16 @@ int  cmd_dispatch(int  command)
 				
             }
 #endif
+         #ifdef RDK_ONEWIFI
+             if(harvesterRbusInit(RBUS_HARVESTER_COMPONENT_NAME))
+             {
+                 fprintf(stderr, "RDK_LOG_ERROR, Harvester component '%s' with RBUS Failed ..\n", RBUS_HARVESTER_COMPONENT_NAME);
+             }
+             else
+             {
+                 fprintf(stderr, "RDK_LOG_INFO, Registered Harvester component '%s' with RBUS ..\n", RBUS_HARVESTER_COMPONENT_NAME);
+             }
+        #endif
 
             returnStatus = ssp_create();
             if(ANSC_STATUS_SUCCESS != returnStatus)

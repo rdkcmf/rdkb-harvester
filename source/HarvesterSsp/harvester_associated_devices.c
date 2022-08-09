@@ -36,6 +36,9 @@
 #include "report_common.h"
 #include "safec_lib_common.h"
 #include "secure_wrapper.h"
+#ifdef RDK_ONEWIFI
+#include "harvester_rbus_api.h"
+#endif
 
 #define PUBLIC  0
 #define PRIVATE 1
@@ -62,6 +65,10 @@ BOOL IDWHarvesterStatus = FALSE;
 
 ULONG IDWOverrideTTL = TTL_INTERVAL;
 ULONG IDWOverrideTTLDefault = DEFAULT_TTL_INTERVAL;
+
+#ifdef RDK_ONEWIFI
+char bufferIDR[128] = {'\0'};
+#endif
 
 void* StartAssociatedDeviceHarvesting( void *arg );
 #if !defined(UTC_ENABLE_ATOM) && !defined(_HUB4_PRODUCT_REQ_)
@@ -472,6 +479,26 @@ void delete_list(  struct associateddevicedata *headnode )
     return;
 }
 
+#ifdef RDK_ONEWIFI
+int parseInputValue(char * value)
+{
+    int retVal = 0;
+    int count = 1;
+
+    char* token = strtok(value, " . ");
+    while (token != NULL)
+    {
+        if(count == 4)
+        {
+            retVal = atoi(token);
+        }
+        token = strtok(NULL, " . ");
+        count++;
+    }
+    return retVal;
+}
+#endif
+
 int GetWiFiApGetAssocDevicesData(int ServiceType, int wlanIndex, char* pSsid)
 {
 
@@ -484,8 +511,14 @@ int GetWiFiApGetAssocDevicesData(int ServiceType, int wlanIndex, char* pSsid)
     char interfaceMAC[128] = {0};
     ULONG channel = 0;
     char freqband[128] = {0};
+#ifdef RDK_ONEWIFI
+    char llayer[128] = {0};
 
+    snprintf(bufferIDR, sizeof(bufferIDR), "Device.WiFi.SSID.%d.Enable", wlanIndex+1);
+    int ret = rbus_getBoolValue(&enabled, bufferIDR);
+#else
     int ret = wifi_getApEnable(wlanIndex, &enabled);
+#endif
     if (ret || enabled == FALSE)
     {
 	if ( ServiceType == PUBLIC )
@@ -502,21 +535,43 @@ int GetWiFiApGetAssocDevicesData(int ServiceType, int wlanIndex, char* pSsid)
 
     CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s : WLAN Index is %d for SSID %s \n", __FUNCTION__, wlanIndex, pSsid));
 
+#ifdef RDK_ONEWIFI
+    snprintf(bufferIDR, sizeof(bufferIDR), "Device.WiFi.SSID.%d.BSSID", wlanIndex+1);
+    ret = rbus_getStringValue((char*)&interfaceMAC, bufferIDR);
+#else
     ret = wifi_getBaseBSSID(wlanIndex, (char*)&interfaceMAC); //Tr181
+#endif
+
     if (ret)
     {
         CcspHarvesterTrace(("RDK_LOG_ERROR, Harvester %s : wlanIndex[%d] BSSID [%s] \n",__FUNCTION__, wlanIndex, interfaceMAC));
         return ret;
     }
 
+#ifdef RDK_ONEWIFI
+    snprintf(bufferIDR, sizeof(bufferIDR), "Device.WiFi.SSID.%d.LowerLayers", wlanIndex+1);
+    ret = rbus_getStringValue((char*)&llayer, bufferIDR);
+    if(!ret)
+    {
+        radioIndex = parseInputValue(llayer);
+    }
+#else
     ret = wifi_getSSIDRadioIndex(wlanIndex, &radioIndex);
+#endif
+
     if (ret)
     {
         CcspHarvesterTrace(("RDK_LOG_ERROR, Harvester %s : wlanIndex[%d] radioIndex [%d] \n",__FUNCTION__, wlanIndex, radioIndex));
         return ret;
     }
 
+#ifdef RDK_ONEWIFI
+    snprintf(bufferIDR, sizeof(bufferIDR), "Device.WiFi.Radio.%d.Channel", radioIndex);
+    ret = rbus_getUInt32Value(&channel, bufferIDR);
+#else
     ret = wifi_getRadioChannel(radioIndex, &channel);
+#endif
+
     if (ret)
     {
         CcspHarvesterTrace(("RDK_LOG_ERROR, Harvester %s : wlanIndex[%d] channel [%ld] \n",__FUNCTION__, wlanIndex, channel));
@@ -524,16 +579,24 @@ int GetWiFiApGetAssocDevicesData(int ServiceType, int wlanIndex, char* pSsid)
     }
 
 
+#ifdef RDK_ONEWIFI
+    snprintf(bufferIDR, sizeof(bufferIDR), "Device.WiFi.Radio.%d.OperatingFrequencyBand", radioIndex);
+    ret = rbus_getStringValue((char*)&freqband, bufferIDR);
+#else
     ret = wifi_getRadioOperatingFrequencyBand(radioIndex, (char*)&freqband);
+#endif
     if (ret)
     {
         CcspHarvesterTrace(("RDK_LOG_ERROR, Harvester %s : radioIndex[%d] freqband [%s] \n",__FUNCTION__, radioIndex, freqband));
         return ret;
     }
 
-
+#ifdef RDK_ONEWIFI
+    ret = rbus_getApAssociatedDeviceDiagnosticResult(wlanIndex+1, &wifi_associated_dev_array, &array_size);
+#else
     //hal would allocate the array
     ret = wifi_getApAssociatedDeviceDiagnosticResult(wlanIndex, &wifi_associated_dev_array, &array_size);
+#endif
     if (!ret && wifi_associated_dev_array && array_size > 0)
     {
         struct associateddevicedata **headnode = NULL;
@@ -619,7 +682,12 @@ void* StartAssociatedDeviceHarvesting( void *arg )
         SetIDWOverrideTTL(currentReportingPeriod);
     }
 
+#ifdef RDK_ONEWIFI
+    snprintf(bufferIDR, sizeof(bufferIDR), "Device.WiFi.RadioNumberOfEntries");
+    ret = rbus_getUInt32Value(&ulNumOfRadios, bufferIDR);
+#else
     ret = wifi_getRadioNumberOfEntries(&ulNumOfRadios);
+#endif
     if (ret) {
         ulNumOfRadios = 2;
         CcspHarvesterTrace(("RDK_LOG_ERROR, Harvester %s : wifi_getRadioNumberOfEntries returned error [%d] \n",__FUNCTION__,  ret));
@@ -636,8 +704,13 @@ void* StartAssociatedDeviceHarvesting( void *arg )
         /* CID: 79303 OVERRUN - Out-of-bounds access
          * qtn-wifi component access the max buffer size as 512 bytes*/
         char ssid[STR_BUF_MAX] = {0};
-        int ret =  wifi_getSSIDNumberOfEntries(&output); //Tr181
 
+#ifdef RDK_ONEWIFI
+        snprintf(bufferIDR, sizeof(bufferIDR), "Device.WiFi.SSIDNumberOfEntries");
+        ret = rbus_getUInt32Value(&output, bufferIDR);
+#else
+        int ret =  wifi_getSSIDNumberOfEntries(&output); //Tr181
+#endif
         CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Number of SSID Entries = %ld ReturnValue [%d]\n", output, ret));
 
         if (!ret && output > 0)
@@ -646,7 +719,12 @@ void* StartAssociatedDeviceHarvesting( void *arg )
             for (k = 0; k < ulNumOfRadios; k++)
             {
                 CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, PRIVATE WiFi, Idx = %d\n", k ));
+            #ifdef RDK_ONEWIFI
+                snprintf(bufferIDR, sizeof(bufferIDR), "Device.WiFi.SSID.%d.SSID", (idx_array[k])+1);
+                ret = rbus_getStringValue((char*)&ssid, bufferIDR);
+            #else
                 ret = wifi_getSSIDName(idx_array[k], ssid);
+            #endif
                 if (ret)
                 {
                     CcspHarvesterTrace(("RDK_LOG_ERROR, Harvester %s : wifi_getSSIDName returned error [%d] \n",__FUNCTION__,  ret));
@@ -663,7 +741,12 @@ void* StartAssociatedDeviceHarvesting( void *arg )
             for (k = PUBLIC_WIFI_IDX_STARTS; k <= PUBLIC_WIFI_IDX_ENDS; k++)
             {
                 CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, PUBLIC WiFi, Idx = %d\n", k ));
+            #ifdef RDK_ONEWIFI
+                snprintf(bufferIDR, sizeof(bufferIDR), "Device.WiFi.SSID.%d.SSID", k+1);
+                ret = rbus_getStringValue((char*)&ssid, bufferIDR);
+            #else
                 ret = wifi_getSSIDName(k, ssid);
+            #endif
                 if (ret)
                 {
                     CcspHarvesterTrace(("RDK_LOG_ERROR, Harvester %s : wifi_getSSIDName returned error [%d] \n",__FUNCTION__,  ret));

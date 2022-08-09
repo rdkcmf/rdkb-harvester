@@ -31,7 +31,9 @@
 #include "harvester_avro.h"
 #include "ccsp_harvesterLog_wrapper.h"
 #include "safec_lib_common.h"
-
+#ifdef RDK_ONEWIFI
+#include "harvester_rbus_api.h"
+#endif
 
 
 #define MAGIC_NUMBER      0x85
@@ -473,7 +475,11 @@ void harvester_report_radiotraffic(struct radiotrafficdata *ptr)
   strsize6GHZ = strlen("6GHz");
 #endif
 
-    rc = wifi_getRadioNumberOfEntries(&numElements);
+    #ifdef RDK_ONEWIFI
+           rc = rbus_getUInt32Value(&numElements, "Device.WiFi.RadioNumberOfEntries");
+    #else
+           rc = wifi_getRadioNumberOfEntries(&numElements);
+    #endif
     CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, wifi_getRadioNumberOfEntries() ret value %d\n", rc));
     if(rc != EOK)
     {

@@ -24,6 +24,10 @@
 #include "wifi_hal.h"
 #endif
 #include "safec_lib_common.h"
+#ifdef RDK_ONEWIFI
+#include <rbus.h>
+#include "harvester_rbus_api.h"
+#endif
 
 int consoleDebugEnable = 0;
 FILE* debugLogFile;
@@ -76,13 +80,17 @@ int main(int argc, char* argv[])
 
     fprintf(stderr, "RDK_LOG_DEBUG, Registering Harvester component '%s' with CR ..\n", HARVESTER_COMPONENT_NAME);
 
-
     msgBusInit(HARVESTER_COMPONENT_NAME);
        
     fprintf(stderr, "RDK_LOG_DEBUG, Registered Harvester component '%s' with CR ..\n", HARVESTER_COMPONENT_NAME);
 #if defined(_INTEL_WAV_)
     ULONG output = 0;
-    int ret =  wifi_getRadioNumberOfEntries(&output);
+    int ret =  0;
+    #ifdef RDK_ONEWIFI
+           ret = rbus_getUInt32Value(&output, "Device.WiFi.RadioNumberOfEntries");
+    #else
+           ret =  wifi_getRadioNumberOfEntries(&output);
+    #endif
     if(!ret && output > 0)
     {
         for (int k = 0; k < output; k++)
@@ -109,7 +117,9 @@ int main(int argc, char* argv[])
     {
        fclose(debugLogFile);
     }
-
+#ifdef RDK_ONEWIFI
+    harvesterRbus_Uninit();
+#endif
     fprintf(stderr, "RDK_LOG_DEBUG, Harvester %s EXIT\n", __FUNCTION__ );
 
     return 0;

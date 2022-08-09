@@ -40,6 +40,15 @@ AC_ARG_ENABLE([gtestapp],
              [echo "Gtestapp is disabled"])
 AM_CONDITIONAL([WITH_GTEST_SUPPORT], [test x$GTEST_SUPPORT_ENABLED = xtrue])
 
+AC_ARG_ENABLE([rdkOneWifi],
+[  --enable-rdkOneWifi    Turn on OneWifi ],
+[case "${enableval}" in
+  yes) RDK_ONEWIFI=true ;;
+  no)  RDK_ONEWIFI=false ;;
+  *) AC_MSG_ERROR([bad value ${enableval} for --enable-rdkOneWifi]) ;;
+esac],[RDK_ONEWIFI=false])
+AM_CONDITIONAL([RDK_ONEWIFI], [test x$RDK_ONEWIFI = xtrue])
+
 AC_PREFIX_DEFAULT(`pwd`)
 AC_ENABLE_SHARED
 AC_DISABLE_STATIC

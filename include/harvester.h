@@ -21,7 +21,9 @@
 #define _HARVESTER_H_
 
 #define HARVESTER_COMPONENT_NAME		"com.cisco.spvtg.ccsp.harvester"
-
+#ifdef RDK_ONEWIFI
+#define RBUS_HARVESTER_COMPONENT_NAME            "harvester"
+#endif
 #if (defined SIMULATION)
 #define NEIGHBORHOOD_SCAN_AVRO_FILENAME		"GatewayAccessPointNeighborScanReport.avsc"
 #define INTERFACE_DEVICES_WIFI_AVRO_FILENAME		"InterfaceDevicesWifi.avsc"

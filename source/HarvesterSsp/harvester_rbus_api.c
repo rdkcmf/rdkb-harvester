@@ -613,192 +613,188 @@ int rbus_wifi_getNeighboringWiFiDiagnosticResult2(bool *executed, wifi_neighbor_
     tmp_neighbor_ap_arr = (wifi_neighbor_ap2_t *) calloc(*array_size, sizeof(wifi_neighbor_ap2_t));
     *neighbor_ap_array = tmp_neighbor_ap_arr;
 
-    for(count = 0; count < *array_size; count++)
+    snprintf(wildcardPath, sizeof(wildcardPath), "Device.WiFi.NeighboringWiFiDiagnostic.Result.");
+    params[0] = wildcardPath;
+
+    CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s: calling rbus get for %s\n", __FUNCTION__, wildcardPath));
+
+    rc = rbus_getExt(rbus_handle, 1, (const char **) params, &resCount, &props);
+
+    if(rc != RBUS_ERROR_SUCCESS)
     {
-        snprintf(wildcardPath, sizeof(wildcardPath), "Device.WiFi.NeighboringWiFiDiagnostic.Result.%d.", count+1);
-        params[0] = wildcardPath;
+        CcspHarvesterTrace(("RDK_LOG_ERROR, Harvester %s: rbus_getExt failed for [%s] with error [%d]\n", __FUNCTION__, wildcardPath, rc));
+        rbusProperty_Release(props);
+        return 1;
+    }
+    if(props != NULL)
+    {
+        rbusProperty_t next = props;
 
-        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s: calling rbus get for %s\n", __FUNCTION__, wildcardPath));
-
-        rc = rbus_getExt(rbus_handle, 1, (const char **) params, &resCount, &props);
-
-        if(rc != RBUS_ERROR_SUCCESS)
+        while(next != NULL)
         {
-            CcspHarvesterTrace(("RDK_LOG_ERROR, Harvester %s: rbus_getExt failed for [%s] with error [%d]\n", __FUNCTION__, wildcardPath, rc));
-            rbusProperty_Release(props);
-            return 1;
-        }
-        
-        if(props != NULL)
-        {
-            CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s: %d results available, iteration %d\n", wildcardPath, resCount, count));
+            paramValue_t = rbusProperty_GetValue(next);
 
-            rbusProperty_t next = props;
-
-            while(next != NULL)
+            if(paramValue_t != NULL)
             {
-                paramValue_t = rbusProperty_GetValue(next);
+                char * propName = (char *) rbusProperty_GetName(next);
 
-                if(paramValue_t != NULL)
+                sscanf(propName, "Device.WiFi.NeighboringWiFiDiagnostic.Result.%d", &count);
+                CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s: %d results available, iteration %d\n", wildcardPath, resCount, count));
+                if(propName != NULL)
                 {
-                    char * propName = (char *) rbusProperty_GetName(next);
-
-                    if(propName != NULL)
+                    if(strstr(propName, ".SSID") != NULL)
                     {
-                        if(strstr(propName, ".SSID") != NULL)
+                        char * ssid = (char *)rbusValue_GetString(paramValue_t, NULL);
+                        if(ssid != NULL)
                         {
-                            char * ssid = (char *)rbusValue_GetString(paramValue_t, NULL);
-                            if(ssid != NULL)
-                            {
-                                strcpy_s(tmp_neighbor_ap_arr[count].ap_SSID,64,ssid);
-                            }
-                            else
-                                CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s value is NULL\n", propName));
+                            strcpy_s(tmp_neighbor_ap_arr[count].ap_SSID,64,ssid);
                         }
-                        else if(strstr(propName, ".BSSID") != NULL)
-                        {
-                            char * bssid = (char *)rbusValue_GetString(paramValue_t, NULL);
-                            if(bssid != NULL)
-                            {
-                                strcpy_s(tmp_neighbor_ap_arr[count].ap_BSSID,64,bssid);
-                            }
-                            else
-                                CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s value is NULL\n", propName));
-                        }
-                        else if(strstr(propName, ".Mode") != NULL)
-                        {
-                            char * mode = (char *)rbusValue_GetString(paramValue_t, NULL);
-                            if(mode != NULL)
-                            {
-                                strcpy_s(tmp_neighbor_ap_arr[count].ap_Mode,64,mode);
-                            }
-                            else
-                                CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s value is NULL\n", propName));
-                        }
-                        else if(strstr(propName, ".Channel") != NULL)
-                        {
-                            uint32_t channel = rbusValue_GetUInt32(paramValue_t);
-                            tmp_neighbor_ap_arr[count].ap_Channel = channel;
-                        }
-                        else if(strstr(propName, ".SignalStrength") != NULL)
-                        {
-                            int signalStrength  = rbusValue_GetInt32(paramValue_t);
-                            tmp_neighbor_ap_arr[count].ap_SignalStrength = signalStrength;
-                        }
-                        else if(strstr(propName, ".SecurityModeEnabled") != NULL)
-                        {
-                            char * securityModeEnabled = (char *)rbusValue_GetString(paramValue_t, NULL);
-                            if(securityModeEnabled != NULL)
-                            {
-                                strcpy_s(tmp_neighbor_ap_arr[count].ap_SecurityModeEnabled,64,securityModeEnabled);
-                            }
-                            else
-                                CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s value is NULL\n", propName));
-                        }
-                        else if(strstr(propName, ".EncryptionMode") != NULL)
-                        {
-                            char * encryptionMode = (char *)rbusValue_GetString(paramValue_t, NULL);
-                            if(encryptionMode != NULL)
-                            {
-                                strcpy_s(tmp_neighbor_ap_arr[count].ap_EncryptionMode,64,encryptionMode);
-                            }
-                            else
-                                CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s value is NULL\n", propName));
-                        }
-                        else if(strstr(propName, ".OperatingFrequencyBand") != NULL)
-                        {
-                            char * operatingFrequencyBand = (char *)rbusValue_GetString(paramValue_t, NULL);
-                            if(operatingFrequencyBand != NULL)
-                            {
-                                strcpy_s(tmp_neighbor_ap_arr[count].ap_OperatingFrequencyBand,16, operatingFrequencyBand);
-                            }
-                            else
-                                CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s value is NULL\n", propName));
-                        }
-                        else if(strstr(propName, ".SupportedStandards") != NULL)
-                        {
-                            char * supportedStandards = (char *)rbusValue_GetString(paramValue_t, NULL);
-                            if(supportedStandards != NULL)
-                            {
-                                strcpy_s(tmp_neighbor_ap_arr[count].ap_SupportedStandards,64,supportedStandards);
-                            }
-                            else
-                                CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s value is NULL\n", propName));
-                        }
-                        else if(strstr(propName, ".OperatingStandards") != NULL)
-                        {
-                            char * operatingStandards = (char *)rbusValue_GetString(paramValue_t, NULL);
-                            if(operatingStandards != NULL)
-                            {
-                                strcpy_s(tmp_neighbor_ap_arr[count].ap_OperatingStandards,16,operatingStandards);
-                            }
-                            else
-                                CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s value is NULL\n", propName));
-                        }
-                        else if(strstr(propName, ".OperatingChannelBandwidth") != NULL)
-                        {
-                            char * operatingChannelBandwidth = (char *)rbusValue_GetString(paramValue_t, NULL);
-                            if(operatingChannelBandwidth != NULL)
-                            {
-                                strcpy_s(tmp_neighbor_ap_arr[count].ap_OperatingChannelBandwidth,16, operatingChannelBandwidth);
-                            }
-                            else
-                                CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s value is NULL\n", propName));
-                        }
-                        else if(strstr(propName, ".BeaconPeriod") != NULL)
-                        {
-                            uint32_t beaconPeriod = rbusValue_GetUInt32(paramValue_t);
-                            tmp_neighbor_ap_arr[count].ap_BeaconPeriod = beaconPeriod;
-                        }
-                        else if(strstr(propName, ".Noise") != NULL)
-                        {
-                            int noise = rbusValue_GetInt32(paramValue_t);
-                            tmp_neighbor_ap_arr[count].ap_Noise = noise;
-                        }
-                        else if(strstr(propName, ".BasicDataTransferRates") != NULL)
-                        {
-                            char * basicDataTransferRates = (char *)rbusValue_GetString(paramValue_t, NULL);
-                            if(basicDataTransferRates != NULL)
-                            {
-                                strcpy_s(tmp_neighbor_ap_arr[count].ap_BasicDataTransferRates,256, basicDataTransferRates);
-                            }
-                            else
-                                CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s value is NULL\n", propName));
-                        }
-                        else if(strstr(propName, ".SupportedDataTransferRates") != NULL)
-                        {
-                            char * supportedDataTransferRates = (char *)rbusValue_GetString(paramValue_t, NULL);
-                            if(supportedDataTransferRates != NULL)
-                            {
-                                strcpy_s(tmp_neighbor_ap_arr[count].ap_SupportedDataTransferRates,256, supportedDataTransferRates);
-                            }
-                            else
-                                CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s value is NULL\n", propName));
-                        }
-                        else if(strstr(propName, ".DTIMPeriod") != NULL)
-                        {
-                            uint32_t dtimPeriod = rbusValue_GetUInt32(paramValue_t);
-                            tmp_neighbor_ap_arr[count].ap_DTIMPeriod = dtimPeriod;
-                        }
-                        else if(strstr(propName, ".X_COMCAST-COM_ChannelUtilization") != NULL)
-                        {
-                            uint32_t channelUtilization = rbusValue_GetUInt32(paramValue_t);
-                            tmp_neighbor_ap_arr[count].ap_ChannelUtilization = channelUtilization;
-                        }
+                        else
+                            CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s value is NULL\n", propName));
                     }
-                    else
-                        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester propName is NULL\n"));
+                    else if(strstr(propName, ".BSSID") != NULL)
+                    {
+                        char * bssid = (char *)rbusValue_GetString(paramValue_t, NULL);
+                        if(bssid != NULL)
+                        {
+                            strcpy_s(tmp_neighbor_ap_arr[count].ap_BSSID,64,bssid);
+                        }
+                        else
+                            CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s value is NULL\n", propName));
+                    }
+                    else if(strstr(propName, ".Mode") != NULL)
+                    {
+                        char * mode = (char *)rbusValue_GetString(paramValue_t, NULL);
+                        if(mode != NULL)
+                        {
+                            strcpy_s(tmp_neighbor_ap_arr[count].ap_Mode,64,mode);
+                        }
+                        else
+                            CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s value is NULL\n", propName));
+                    }
+                    else if(strstr(propName, ".Channel") != NULL)
+                    {
+                        uint32_t channel = rbusValue_GetUInt32(paramValue_t);
+                        tmp_neighbor_ap_arr[count].ap_Channel = channel;
+                    }
+                    else if(strstr(propName, ".SignalStrength") != NULL)
+                    {
+                        int signalStrength  = rbusValue_GetInt32(paramValue_t);
+                        tmp_neighbor_ap_arr[count].ap_SignalStrength = signalStrength;
+                    }
+                    else if(strstr(propName, ".SecurityModeEnabled") != NULL)
+                    {
+                        char * securityModeEnabled = (char *)rbusValue_GetString(paramValue_t, NULL);
+                        if(securityModeEnabled != NULL)
+                        {
+                            strcpy_s(tmp_neighbor_ap_arr[count].ap_SecurityModeEnabled,64,securityModeEnabled);
+                        }
+                        else
+                            CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s value is NULL\n", propName));
+                    }
+                    else if(strstr(propName, ".EncryptionMode") != NULL)
+                    {
+                        char * encryptionMode = (char *)rbusValue_GetString(paramValue_t, NULL);
+                        if(encryptionMode != NULL)
+                        {
+                            strcpy_s(tmp_neighbor_ap_arr[count].ap_EncryptionMode,64,encryptionMode);
+                        }
+                        else
+                            CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s value is NULL\n", propName));
+                    }
+                    else if(strstr(propName, ".OperatingFrequencyBand") != NULL)
+                    {
+                        char * operatingFrequencyBand = (char *)rbusValue_GetString(paramValue_t, NULL);
+                        if(operatingFrequencyBand != NULL)
+                        {
+                            strcpy_s(tmp_neighbor_ap_arr[count].ap_OperatingFrequencyBand,16, operatingFrequencyBand);
+                        }
+                        else
+                            CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s value is NULL\n", propName));
+                    }
+                    else if(strstr(propName, ".SupportedStandards") != NULL)
+                    {
+                        char * supportedStandards = (char *)rbusValue_GetString(paramValue_t, NULL);
+                        if(supportedStandards != NULL)
+                        {
+                            strcpy_s(tmp_neighbor_ap_arr[count].ap_SupportedStandards,64,supportedStandards);
+                        }
+                        else
+                            CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s value is NULL\n", propName));
+                    }
+                    else if(strstr(propName, ".OperatingStandards") != NULL)
+                    {
+                        char * operatingStandards = (char *)rbusValue_GetString(paramValue_t, NULL);
+                        if(operatingStandards != NULL)
+                        {
+                            strcpy_s(tmp_neighbor_ap_arr[count].ap_OperatingStandards,16,operatingStandards);
+                        }
+                        else
+                            CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s value is NULL\n", propName));
+                    }
+                    else if(strstr(propName, ".OperatingChannelBandwidth") != NULL)
+                    {
+                        char * operatingChannelBandwidth = (char *)rbusValue_GetString(paramValue_t, NULL);
+                        if(operatingChannelBandwidth != NULL)
+                        {
+                            strcpy_s(tmp_neighbor_ap_arr[count].ap_OperatingChannelBandwidth,16, operatingChannelBandwidth);
+                        }
+                        else
+                            CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s value is NULL\n", propName));
+                    }
+                    else if(strstr(propName, ".BeaconPeriod") != NULL)
+                    {
+                        uint32_t beaconPeriod = rbusValue_GetUInt32(paramValue_t);
+                        tmp_neighbor_ap_arr[count].ap_BeaconPeriod = beaconPeriod;
+                    }
+                    else if(strstr(propName, ".Noise") != NULL)
+                    {
+                        int noise = rbusValue_GetInt32(paramValue_t);
+                        tmp_neighbor_ap_arr[count].ap_Noise = noise;
+                    }
+                    else if(strstr(propName, ".BasicDataTransferRates") != NULL)
+                    {
+                        char * basicDataTransferRates = (char *)rbusValue_GetString(paramValue_t, NULL);
+                        if(basicDataTransferRates != NULL)
+                        {
+                            strcpy_s(tmp_neighbor_ap_arr[count].ap_BasicDataTransferRates,256, basicDataTransferRates);
+                        }
+                        else
+                            CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s value is NULL\n", propName));
+                    }
+                    else if(strstr(propName, ".SupportedDataTransferRates") != NULL)
+                    {
+                        char * supportedDataTransferRates = (char *)rbusValue_GetString(paramValue_t, NULL);
+                        if(supportedDataTransferRates != NULL)
+                        {
+                            strcpy_s(tmp_neighbor_ap_arr[count].ap_SupportedDataTransferRates,256, supportedDataTransferRates);
+                        }
+                        else
+                            CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s value is NULL\n", propName));
+                    }
+                    else if(strstr(propName, ".DTIMPeriod") != NULL)
+                    {
+                        uint32_t dtimPeriod = rbusValue_GetUInt32(paramValue_t);
+                        tmp_neighbor_ap_arr[count].ap_DTIMPeriod = dtimPeriod;
+                    }
+                    else if(strstr(propName, ".X_COMCAST-COM_ChannelUtilization") != NULL)
+                    {
+                        uint32_t channelUtilization = rbusValue_GetUInt32(paramValue_t);
+                        tmp_neighbor_ap_arr[count].ap_ChannelUtilization = channelUtilization;
+                    }
                 }
                 else
-                    CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester paramValue_t is NULL\n" ));
-                next = rbusProperty_GetNext(next);
+                    CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester propName is NULL\n"));
             }
-            rbusProperty_Release(props);
+            else
+                CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester paramValue_t is NULL\n" ));
+            next = rbusProperty_GetNext(next);
         }
-        
-        // setting the flag to indicate the diagnostic is already run
-        *executed = true;
+        rbusProperty_Release(props);
     }
+
+    // setting the flag to indicate the diagnostic is already run
+    *executed = true;
     return 0;
 }
 // End of File

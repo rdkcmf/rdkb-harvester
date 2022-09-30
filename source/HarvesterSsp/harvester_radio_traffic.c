@@ -443,9 +443,9 @@ void delete_rt_list()
 
     for(i = 0; i < radio_num; i++)
     {
-        CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, with radioName[%s] \n", rIndex[i].radioBssid));
         if((rIndex[i].radioBssid) != NULL)
         {
+	    CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, with radioName[%s] \n", rIndex[i].radioBssid));
             free(rIndex[i].radioBssid);
         }
         if((rIndex[i].radioOperatingFrequencyBand) != NULL)

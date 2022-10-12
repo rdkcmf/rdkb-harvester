@@ -639,6 +639,12 @@ int rbus_wifi_getNeighboringWiFiDiagnosticResult2(bool *executed, wifi_neighbor_
                 char * propName = (char *) rbusProperty_GetName(next);
 
                 sscanf(propName, "Device.WiFi.NeighboringWiFiDiagnostic.Result.%d", &count);
+		count = count-1;
+		if(count<0)
+		{
+			CcspHarvesterTrace(("RDK_LOG_ERROR, Harvester %s: the index %d, is less than 0\n", wildcardPath, count));
+			return 1;
+		}
                 CcspHarvesterConsoleTrace(("RDK_LOG_DEBUG, Harvester %s: %d results available, iteration %d\n", wildcardPath, resCount, count));
                 if(propName != NULL)
                 {
